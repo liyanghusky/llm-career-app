@@ -4,12 +4,15 @@ const app = document.getElementById("app");
 const modal = document.getElementById("modal");
 const modalBody = document.getElementById("modalBody");
 
-const RENDER = { home: viewHome, roadmap: viewRoadmap, project: viewProject, bank: viewBank, drill: viewDrill };
+const RENDER = { home: viewHome, roadmap: viewRoadmap, project: viewProject, bank: viewBank, drill: viewDrill, lc: viewLc };
 
 function render(keepScroll) {
   const y = window.scrollY;
-  app.innerHTML = (RENDER[view] || viewHome)();
-  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.view === view));
+  app.innerHTML = view.startsWith("lesson:")
+    ? viewLesson(view.slice(7))
+    : (RENDER[view] || viewHome)();
+  const tabKey = view.startsWith("lesson:") ? "roadmap" : view;
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.view === tabKey));
   document.getElementById("streak").textContent = streak() ? `${streak()}d 连续` : "";
   if (keepScroll) window.scrollTo(0, y);
   else window.scrollTo(0, 0);
@@ -21,7 +24,7 @@ function go(v) {
 }
 window.addEventListener("hashchange", () => {
   const v = location.hash.replace("#", "") || "home";
-  if (v !== view) { view = v; render(); }
+  if (v !== view && !v.startsWith("sec") && v !== "quizsec") { view = v; render(); }
 });
 
 /* ── 顶部导航 ── */
@@ -69,6 +72,65 @@ document.body.addEventListener("click", e => {
   // 跳转
   const g = t.closest("[data-go]");
   if (g) { go(g.dataset.go); return; }
+  // 打开课程
+  const ls = t.closest("[data-lesson]");
+  if (ls) { go("lesson:" + ls.dataset.lesson); return; }
+  // 目录锚点
+  const sec = t.closest("[data-sec]");
+  if (sec) {
+    e.preventDefault();
+    const id = sec.dataset.sec === "q" ? "quizsec" : "sec" + sec.dataset.sec;
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
+  // ── 课后题 ──
+  const qs = t.closest("[data-qsub]");
+  if (qs) {
+    const id = qs.dataset.qsub;
+    const q = findQuiz(id);
+    const cur = quizState(id);
+    const ok = checkQuiz(q, cur.val);
+    S.quiz[id] = { ...cur, tries: cur.tries + 1, ok, shown: cur.shown || ok };
+    save(); render(true); return;
+  }
+  const qo = t.closest("[data-qopen]");
+  if (qo) {
+    const id = qo.dataset.qopen;
+    const cur = quizState(id);
+    if (!String(cur.val || "").trim()) {
+      alert("先把你的答案写下来再看参考答案。\n写出来和想一遍完全是两回事 —— 这一步别跳。");
+      return;
+    }
+    S.quiz[id] = { ...cur, tries: cur.tries + 1, ok: true, shown: true };
+    save(); render(true); return;
+  }
+  const qh = t.closest("[data-qhint]");
+  if (qh) { const k = "hint_" + qh.dataset.qhint; UI.open[k] = !UI.open[k]; render(true); return; }
+  const qg = t.closest("[data-qgive]");
+  if (qg) {
+    const id = qg.dataset.qgive;
+    S.quiz[id] = { ...quizState(id), shown: true };
+    save(); render(true); return;
+  }
+
+  // ── LeetCode ──
+  const lcb = t.closest("[data-lc]");
+  if (lcb) {
+    const [slug, s] = lcb.dataset.lc.split(":");
+    lcSet(slug, +s); render(true); return;
+  }
+  const lj = t.closest("[data-lcjump]");
+  if (lj) {
+    const slug = lj.dataset.lcjump;
+    const grp = LC_GROUPS.find(gp => gp.problems.some(p => p.slug === slug));
+    UI.open["lg_" + grp.key] = true;
+    UI.open["lc_" + slug] = true;
+    render(true);
+    setTimeout(() => document.querySelector(`[data-tog="lc_${slug}"]`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
+    return;
+  }
   // 项目详情
   const pj = t.closest("[data-proj]");
   if (pj) { openModal(projModal(pj.dataset.proj)); return; }
@@ -124,6 +186,43 @@ document.body.addEventListener("change", e => {
       alert(ok ? "导入成功" : "文件格式不对");
       closeModal(); render();
     });
+  }
+});
+
+/* 按 id 找到课后题定义 */
+function findQuiz(id) {
+  for (const k in LESSONS) {
+    const q = LESSONS[k].quiz.find(x => x.id === id);
+    if (q) return q;
+  }
+  return null;
+}
+
+/* 课后题输入：静默存值，不重渲染（否则输入框失焦） */
+document.body.addEventListener("input", e => {
+  const qi = e.target.closest("[data-qin]");
+  if (qi && e.target.type !== "radio") {
+    const id = qi.dataset.qin;
+    S.quiz[id] = { ...quizState(id), val: e.target.value };
+    clearTimeout(window.__qsave);
+    window.__qsave = setTimeout(save, 400);
+  }
+});
+/* 单选题：存值后重渲染以更新选中样式 */
+document.body.addEventListener("change", e => {
+  const qi = e.target.closest("[data-qin]");
+  if (qi && e.target.type === "radio") {
+    const id = qi.dataset.qin;
+    S.quiz[id] = { ...quizState(id), val: e.target.value };
+    save(); render(true);
+  }
+});
+/* 课后题输入框回车即提交 */
+document.body.addEventListener("keydown", e => {
+  const qi = e.target.closest("[data-qin]");
+  if (qi && e.key === "Enter" && e.target.tagName === "INPUT") {
+    e.preventDefault();
+    document.querySelector(`[data-qsub="${qi.dataset.qin}"]`)?.click();
   }
 });
 

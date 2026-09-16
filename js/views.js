@@ -8,14 +8,22 @@ const barEl = (p, c) => `<div class="bar"><i style="width:${p}%;background:${c |
 /* ════════ 总览 ════════ */
 function viewHome() {
   const r = roadProg(), q = qProg(), pj = projAny(), due = dueList().length;
+  const lp = lessonsProg(), lc = lcStat();
 
   // 下一步建议
   const nexts = [];
   const nd = allNodes().filter(n => !S.nodes[n.id]).slice(0, 3);
   nd.forEach(n => {
     const st = ROADMAP.find(s => s.nodes.includes(n));
-    nexts.push({ v: "roadmap", t: n.name, s: `${st.name} · 预估 ${n.est || "—"}`, tag: "学" });
+    const has = !!LESSONS[n.id];
+    nexts.push({
+      v: has ? "lesson:" + n.id : "roadmap", t: n.name,
+      s: has ? `${st.name} · 有完整课程和课后题 · 预估 ${n.est}` : `${st.name} · 预估 ${n.est || "—"}`,
+      tag: "学"
+    });
   });
+  const lcr = lcReview();
+  if (lcr.length) nexts.push({ v: "lc", t: `${lcr.length} 道算法题该复习了`, s: "一周前没独立做出来的题，回来重做", tag: "码" });
   if (due) nexts.push({ v: "drill", t: `有 ${due} 张卡片待复习`, s: "间隔重复安排的复习队列，10 分钟搞定", tag: "练" });
   const npj = PROJECTS.find(p => projProg(p).done > 0 && projProg(p).pct < 100)
     || PROJECTS.find(p => projProg(p).done === 0);
@@ -35,19 +43,22 @@ function viewHome() {
   <div class="hero">
     <div class="kicker">ML / LLM Job Prep</div>
     <h1>把「想转 LLM」变成一条能走完的路</h1>
-    <p>${ROADMAP.length} 个阶段、${r.total} 个学习单元、${PROJECTS.length} 个可写进简历的项目、${q.total} 道带详解的高频面试题。
-       所有进度存在本地浏览器，随时导出备份。先看路线图，再挑项目动手，最后用刷卡把答案练到能说出口。</p>
+    <p>${ROADMAP.length} 个阶段、${r.total} 个学习单元、${PROJECTS.length} 个简历项目、${q.total} 道面试题、${lc.total} 道算法题。
+       阶段 0 有<b>从零讲起的完整课程和课后题</b>（不给答案，要你自己算）。所有进度存在本地浏览器，随时导出备份。</p>
     <div class="cta">
-      <button class="btn" data-go="roadmap">开始路线图</button>
-      <button class="btn sec" data-go="bank">直接刷题库</button>
+      <button class="btn" data-lesson="s0n1">从第一课开始学 →</button>
+      <button class="btn sec" data-go="roadmap">看完整路线图</button>
+      <button class="btn sec" data-go="lc">算法题</button>
       <button class="btn sec" data-go="drill">今日复习 ${due ? `(${due})` : ""}</button>
     </div>
   </div>
 
-  <div class="stats">
+  <div class="stats s6">
     <div class="stat"><div class="n">${r.pct}<small>%</small></div><div class="l">路线图 ${r.done}/${r.total}</div>${barEl(r.pct)}</div>
-    <div class="stat"><div class="n">${q.got}<small>/${q.total}</small></div><div class="l">题目已掌握</div>${barEl(q.pct, "var(--ok)")}</div>
-    <div class="stat"><div class="n">${pj.fin}<small>/${pj.total}</small></div><div class="l">项目完成 · ${pj.started} 个在做</div>${barEl(pct(pj.fin, pj.total), "var(--pu)")}</div>
+    <div class="stat"><div class="n">${lp.done}<small>/${lp.total}</small></div><div class="l">课后题答对</div>${barEl(lp.pct, "var(--ac2)")}</div>
+    <div class="stat"><div class="n">${q.got}<small>/${q.total}</small></div><div class="l">面试题掌握</div>${barEl(q.pct, "var(--ok)")}</div>
+    <div class="stat"><div class="n">${lc.solo}<small>/${lc.total}</small></div><div class="l">算法题独立做出</div>${barEl(pct(lc.solo, lc.total), "var(--pu)")}</div>
+    <div class="stat"><div class="n">${pj.fin}<small>/${pj.total}</small></div><div class="l">项目完成</div>${barEl(pct(pj.fin, pj.total), "var(--bad)")}</div>
     <div class="stat"><div class="n">${streak()}<small>天</small></div><div class="l">连续学习</div>${barEl(Math.min(100, streak() * 10), "var(--wr)")}</div>
   </div>
 
@@ -64,11 +75,12 @@ function viewHome() {
 
       <div class="sect-t">怎么用这个 App</div>
       <div class="card tiny muted" style="line-height:1.9">
-        <b style="color:var(--tx)">路线图</b> 是主线，按阶段勾选，每个单元都写了「为什么学 / 怎么学 / 学到什么程度算过」。<br>
+        <b style="color:var(--tx)">路线图</b> 是主线。<b style="color:var(--ac2)">阶段 0 的五节都有完整课程</b> —— 从「向量是什么」讲起，不预设任何大学基础，每节末尾有课后题。<br>
+        <b style="color:var(--tx)">课后题不给答案</b>，要你填进去提交。错了能重试，卡住了有分层提示，试两次以上才解锁解析。<br>
         <b style="color:var(--tx)">项目库</b> 是简历的弹药，每个项目给了分天任务、简历写法和面试官会追问的点。<br>
-        <b style="color:var(--tx)">题库</b> 按分类刷，答案按面试口径写，读完给自己评级（忘了 / 模糊 / 掌握）。<br>
-        <b style="color:var(--tx)">刷卡</b> 用间隔重复安排复习，评「掌握」的卡会隔更久再出现。<br><br>
-        <span style="color:var(--wr)">一条建议：</span>题库的答案不要只读，要出声讲出来。心里懂和讲得清楚是两回事，面试考的是后者。
+        <b style="color:var(--tx)">题库 / 刷卡</b> 按分类刷，间隔重复安排复习，评「掌握」的卡会隔更久再出现。<br>
+        <b style="color:var(--tx)">LeetCode</b> 精选 ${lc.total} 题按模式分组，解法默认折叠，逼你先自己想。<br><br>
+        <span style="color:var(--wr)">一条建议：</span>课后题一定要动笔算，面试题一定要出声讲。心里懂和讲得清楚是两回事，面试考的是后者。
       </div>
     </div>
 
@@ -134,6 +146,12 @@ function viewRoadmap() {
               ${n.how ? `<p><b>怎么学</b>${md(n.how).replace(/^<p>|<\/p>$/g, "")}</p>` : ""}
               ${n.check ? `<p><b>通过标准</b>${md(n.check).replace(/^<p>|<\/p>$/g, "")}</p>` : ""}
               ${n.res ? `<p class="res">${n.res.map(x => `<a href="${x[1]}" target="_blank" rel="noopener">${x[0]} ↗</a>`).join("")}</p>` : ""}
+              ${LESSONS[n.id] ? (() => {
+                const lp = lessonProg(n.id);
+                return `<p style="margin-top:12px"><button class="btn sm" data-lesson="${n.id}">
+                  ${lp.done ? `继续学习（课后题 ${lp.done}/${lp.total}）` : "开始学习 · 完整课程 →"}
+                </button></p>`;
+              })() : ""}
             </div>
           </div>`;
         }).join("")}
@@ -336,6 +354,192 @@ function viewDrill() {
     <div class="filters" style="justify-content:center;margin-top:20px">
       <button class="fbtn ${!UI.cat ? "on" : ""}" data-dcat="">全部分类</button>
       ${QCATS.map(c => `<button class="fbtn ${UI.cat === c.key ? "on" : ""}" data-dcat="${c.key}">${c.name}</button>`).join("")}
+    </div>
+  </div>`;
+}
+
+/* ════════ 课程（阶段 0 具体内容）════════ */
+function viewLesson(nodeId) {
+  const L = LESSONS[nodeId];
+  if (!L) return `<div class="empty">这一节的详细课程还没写，先看路线图里的要点。</div>`;
+  const st = ROADMAP.find(s => s.nodes.some(n => n.id === nodeId));
+  const p = lessonProg(nodeId);
+  const sibs = Object.keys(LESSONS);
+  const idx = sibs.indexOf(nodeId);
+
+  return `
+  <div class="lesson">
+    <div class="lbar">
+      <span class="fbtn" data-go="roadmap">← 路线图</span>
+      <span class="tiny muted">${st ? st.name : ""}</span>
+      <span class="tiny mono" style="margin-left:auto;color:var(--tx3)">${L.est}</span>
+    </div>
+
+    <div class="lhead">
+      <h1>${L.title}</h1>
+      <p>${L.sub}</p>
+    </div>
+
+    <div class="ltoc">
+      <b>本课目录</b>
+      ${L.sections.map((s, i) => `<a href="#sec${i}" data-sec="${i}">${s.h}</a>`).join("")}
+      <a href="#quizsec" data-sec="q" class="qlink">课后题 ${p.done}/${p.total}</a>
+    </div>
+
+    ${L.sections.map((s, i) => `
+      <section class="lsec" id="sec${i}">
+        <h2>${s.h}</h2>
+        ${md(s.b)}
+      </section>`).join("")}
+
+    <section class="lsec" id="quizsec">
+      <div class="quiz-head">
+        <h2>课后题 · ${p.done}/${p.total}</h2>
+        <p>这些题不会直接给你答案。<b>先动笔算</b>，填进去提交，错了可以再试。实在卡住再看提示。</p>
+      </div>
+      ${L.quiz.map((q, i) => quizCard(q, i + 1)).join("")}
+    </section>
+
+    <div class="lfoot">
+      ${p.pct === 100
+        ? `<div class="lfoot-ok">课后题全部答对了。${S.nodes[nodeId] ? "" : `<button class="btn" data-node="${nodeId}" style="margin-left:10px">标记这一节完成</button>`}</div>`
+        : `<div class="tiny muted">还有 ${p.total - p.done} 道没答对。做完再去下一节，效果差别很大。</div>`}
+      <div class="lnav">
+        ${idx > 0 ? `<button class="btn sec" data-lesson="${sibs[idx - 1]}">← 上一节</button>` : "<span></span>"}
+        ${idx < sibs.length - 1 ? `<button class="btn sec" data-lesson="${sibs[idx + 1]}">下一节 →</button>` : "<span></span>"}
+      </div>
+    </div>
+  </div>`;
+}
+
+function quizCard(q, no) {
+  const s = quizState(q.id);
+  const showHint = UI.open["hint_" + q.id];
+  const showWhy = s.ok || s.shown;
+  const cls = s.ok ? "ok" : (s.tries > 0 && !s.ok ? "bad" : "");
+
+  let input = "";
+  if (q.type === "mc") {
+    input = `<div class="choices">${q.choices.map((c, i) => `
+      <label class="ch ${String(s.val) === String(i) ? "sel" : ""} ${showWhy && i === q.ans ? "right" : ""}">
+        <input type="radio" name="${q.id}" value="${i}" ${String(s.val) === String(i) ? "checked" : ""} data-qin="${q.id}">
+        <span>${String.fromCharCode(65 + i)}.</span> ${c}
+      </label>`).join("")}</div>`;
+  } else if (q.type === "open") {
+    input = `<textarea class="qta" data-qin="${q.id}" placeholder="把你的答案写在这里。写出来和想一遍完全是两回事 —— 这一步别跳。">${s.val || ""}</textarea>`;
+  } else {
+    input = `<input class="qinput" data-qin="${q.id}" value="${s.val || ""}"
+      placeholder="${q.type === "num" ? "填数字" : "填答案"}" autocomplete="off">`;
+  }
+
+  return `
+  <div class="qz ${cls}">
+    <div class="qz-q"><span class="qz-no">${no}</span>${md(q.q)}</div>
+    ${input}
+    <div class="qz-ctl">
+      ${q.type === "open"
+        ? `<button class="btn sec sm" data-qopen="${q.id}">写完了，看参考答案</button>`
+        : `<button class="btn sm" data-qsub="${q.id}">提交</button>`}
+      <button class="btn sec sm" data-qhint="${q.id}">${showHint ? "收起提示" : "看提示"}</button>
+      ${!s.ok && s.tries >= 2 && q.type !== "open"
+        ? `<button class="btn sec sm" data-qgive="${q.id}" style="color:var(--tx3)">放弃，看解析</button>` : ""}
+      ${s.tries > 0 && !s.ok && !s.shown ? `<span class="qz-msg bad">不对，再想想（已试 ${s.tries} 次）</span>` : ""}
+      ${s.ok ? `<span class="qz-msg ok">✓ 答对了</span>` : ""}
+    </div>
+    ${showHint ? `<div class="qz-hint"><b>提示</b>${md(q.hint)}</div>` : ""}
+    ${showWhy ? `<div class="qz-why"><b>${q.type === "open" ? "参考答案" : "解析"}</b>${md(q.why || q.ref)}</div>` : ""}
+  </div>`;
+}
+
+/* ════════ LeetCode ════════ */
+function viewLc() {
+  const st = lcStat(), rev = lcReview();
+  return `
+  <div class="hd">
+    <div class="kicker">LeetCode</div>
+    <h1>算法题 · 独立做出 ${st.solo}/${st.total}</h1>
+    <p>精选 ${st.total} 题，按模式分组。目标不是刷得多，是把每一类的套路吃透。</p>
+  </div>
+
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat"><div class="n">${st.solo}<small>/${st.total}</small></div><div class="l">独立做出</div>${barEl(pct(st.solo, st.total), "var(--ok)")}</div>
+    <div class="stat"><div class="n">${st.hint}</div><div class="l">看了提示</div>${barEl(pct(st.hint, st.total), "var(--wr)")}</div>
+    <div class="stat"><div class="n">${st.fail}</div><div class="l">没做出来</div>${barEl(pct(st.fail, st.total), "var(--bad)")}</div>
+    <div class="stat"><div class="n">${rev.length}</div><div class="l">该复习了</div>${barEl(pct(rev.length, st.total), "var(--pu)")}</div>
+  </div>
+
+  ${rev.length ? `<div class="revbox">
+    <b>这 ${rev.length} 道题一周前你没独立做出来，该回来重做了：</b>
+    <div>${rev.map(p => `<span class="chip" data-lcjump="${p.slug}">${p.n ? p.n + ". " : ""}${p.name}</span>`).join("")}</div>
+  </div>` : ""}
+
+  <div class="card lc-intro">
+    <h2 style="font-size:17px;color:#eaf0fb;margin-bottom:4px">${LC_INTRO.title}</h2>
+    ${md(LC_INTRO.body)}
+  </div>
+
+  ${LC_GROUPS.map(g => {
+    const gs = lcGroupStat(g);
+    const open = UI.open["lg_" + g.key] ? "open" : "";
+    return `
+    <div class="stage ${open}">
+      <div class="stage-h" data-tog="lg_${g.key}">
+        <span class="stage-dot" style="color:${g.color};background:${g.color}"></span>
+        <div class="t">
+          <b>${g.name}</b><i>${g.problems.length} 题</i>
+          <p>${g.problems.filter(p => p.must).length} 道必刷</p>
+        </div>
+        <span class="pct">${gs.solo}/${gs.total}</span>
+        <span class="chev">▶</span>
+      </div>
+      <div class="stage-b">
+        <div class="lc-pattern">${md(g.pattern)}</div>
+        ${g.problems.map(p => lcCard(p, g.color)).join("")}
+      </div>
+    </div>`;
+  }).join("")}`;
+}
+
+function lcCard(p, color) {
+  const r = S.lc[p.slug] || {};
+  const op = UI.open["lc_" + p.slug] ? "open" : "";
+  const lvc = { "易": "lv1", "中": "lv2", "难": "lv3" }[p.lv];
+  const isLeet = p.n > 0;
+  return `
+  <div class="lcp ${op} s${r.s || 0}">
+    <div class="lcp-h" data-tog="lc_${p.slug}">
+      <span class="lcdot"></span>
+      <div class="lcp-t">
+        <b>${isLeet ? p.n + ". " : ""}${p.name}</b>
+        ${p.must ? `<span class="key-tag">必刷</span>` : ""}
+      </div>
+      <span class="lv ${lvc}">${p.lv}</span>
+      <span class="chev">▶</span>
+    </div>
+    <div class="lcp-b">
+      <p class="lcwhy"><b>为什么考它</b>${p.why}</p>
+      ${isLeet ? `<p><a href="https://leetcode.cn/problems/${p.slug}/" target="_blank" rel="noopener">去 LeetCode 做这题 ↗</a></p>` : ""}
+
+      <div class="hintbox">
+        ${p.hints.map((h, i) => {
+          const k = "lch_" + p.slug + "_" + i;
+          return UI.open[k]
+            ? `<div class="hint-on"><b>提示 ${i + 1}</b>${h}</div>`
+            : `<button class="btn sec sm" data-tog="${k}">看提示 ${i + 1}${i ? "（还是卡住）" : ""}</button>`;
+        }).join("")}
+      </div>
+
+      ${UI.open["lck_" + p.slug]
+        ? `<div class="keybox"><b>解法要点</b>${md(p.key)}<div class="cx">${p.cx}</div></div>`
+        : `<button class="btn sec sm" data-tog="lck_${p.slug}" style="color:var(--tx3)">展开解法要点（先自己想满 20 分钟）</button>`}
+
+      <div class="lcrate">
+        <span class="tiny muted">做完了标一下：</span>
+        <button class="fbtn ${r.s === 2 ? "on" : ""}" data-lc="${p.slug}:2">独立做出</button>
+        <button class="fbtn ${r.s === 1 ? "on" : ""}" data-lc="${p.slug}:1">看了提示</button>
+        <button class="fbtn ${r.s === 3 ? "on" : ""}" data-lc="${p.slug}:3">没做出来</button>
+        ${r.s ? `<button class="fbtn" data-lc="${p.slug}:0">清除</button>` : ""}
+      </div>
     </div>
   </div>`;
 }

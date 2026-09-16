@@ -12,9 +12,24 @@
 | 模块 | 内容 | 用途 |
 |---|---|---|
 | **路线图** | 8 个阶段 / 41 个学习单元 | 20 周主线。每个单元写清「为什么学 / 怎么学 / 学到什么程度算过」 |
+| **阶段 0 课程** | 5 节完整教材 / 33 道课后题 | 从「向量是什么」讲起，不预设大学基础。**课后题不给答案**，要自己算 |
 | **项目库** | 8 个可写进简历的项目 | 分天任务清单 + 可直接改写的简历描述 + 面试官会追问的问题 |
 | **题库** | 11 类 / 75 道高频面试题 | 答案按「面试口头作答」的口径写，含加分点与常见陷阱 |
 | **刷卡** | 间隔重复记忆卡 | 评「掌握」的卡隔更久再出现；空格翻面，1/2/3 评级 |
+| **算法题** | 10 组 / 50 道精选 LeetCode | 按模式分组，分层提示，解法默认折叠，逼你先自己想 |
+
+### 阶段 0 的完整课程
+
+面向**有高中理科基础、没学过线代和概率论**的自学者，从零讲起：
+
+1. **线性代数** — 向量 → 点积 → 矩阵作为变换 → 矩阵乘法 → 秩 → SVD → 算一笔 LoRA 的账
+2. **概率统计** — 条件概率 → 贝叶斯（含癌症检测悖论）→ 期望方差 → 极大似然 → 推出交叉熵
+3. **微积分与优化** — 导数 → 梯度 → 链式法则 → **手算一次完整反向传播** → SGD 到 AdamW
+4. **Python 工程** — 环境管理、项目结构、numpy 向量化与广播、调试清单、Git
+5. **PyTorch** — Tensor → autograd 原理 → nn.Module → 完整训练循环（要求闭卷默写）
+
+**课后题的设计**：填空/选择/开放三种题型，提交后才判对错。答错可重试，卡住有分层提示，
+试满两次才解锁「放弃看解析」。开放题必须先写下自己的答案才能看参考答案 —— 不给你抄近路的机会。
 
 ### 路线图阶段
 
@@ -62,6 +77,9 @@ js/app.js           路由与事件委托
 data/roadmap.js     学习路线（window.ROADMAP）
 data/projects.js    项目库（window.PROJECTS / PROJECT_COMBOS）
 data/questions.js   题库（window.QCATS / QUESTIONS）
+data/lessons1.js    阶段 0 课程：线代 / 概率 / 微积分（window.LESSONS）
+data/lessons2.js    阶段 0 课程：Python / PyTorch
+data/leetcode.js    算法题（window.LC_INTRO / LC_GROUPS）
 ```
 
 数据层用 JS 全局变量而非 `fetch`，因此 `file://` 直接双击 `index.html` 也能跑。
@@ -77,6 +95,24 @@ data/questions.js   题库（window.QCATS / QUESTIONS）
 
 加学习单元：往 `data/roadmap.js` 对应阶段的 `nodes` 里加
 `{ id, name, est, why, how, check, res:[[名称, 链接]] }`。
+
+给某个学习单元加课程：在 `window.LESSONS` 里用**该单元的 id 作 key**，路线图会自动出现
+「开始学习」按钮。结构：
+
+```js
+window.LESSONS.s1n1 = {
+  title, sub, est,
+  sections: [{ h:"小节标题", b:"markdown 正文" }],
+  quiz: [
+    { id, type:"num",  q, hint, ans: 42, tol: 0.01, why },
+    { id, type:"mc",   q, hint, choices:[...], ans: 1, why },
+    { id, type:"text", q, hint, ans:["可接受答案1","答案2"], why },
+    { id, type:"open", q, hint, ref:"参考答案" },
+  ]
+};
+```
+
+正文的 markdown 额外支持 `### 小标题`、`> 提示框`、以及独占一行的 `$$公式$$`。
 
 加项目：往 `data/projects.js` 加一条，字段见现有项目。
 

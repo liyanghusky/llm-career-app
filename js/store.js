@@ -2,9 +2,11 @@
 const KEY = "llm-career-v1";
 
 const S = Object.assign(
-  { nodes: {}, q: {}, steps: {}, days: [], fav: {} },
+  { nodes: {}, q: {}, steps: {}, days: [], fav: {}, quiz: {}, lc: {} },
   JSON.parse(localStorage.getItem(KEY) || "{}")
 );
+if (!S.quiz) S.quiz = {};
+if (!S.lc) S.lc = {};
 
 function save() {
   const t = today();
@@ -80,6 +82,65 @@ function dueList() {
   });
 }
 
+/* ── 课后题状态 ── */
+// S.quiz[qid] = { tries:n, ok:bool, shown:bool, val:"用户填的答案" }
+function quizState(id) { return S.quiz[id] || { tries: 0, ok: false, shown: false, val: "" }; }
+function normAns(s) {
+  return String(s).trim().toLowerCase()
+    .replace(/[\s，,]/g, "")
+    .replace(/[（）]/g, m => (m === "（" ? "(" : ")"));
+}
+function checkQuiz(q, val) {
+  if (q.type === "num") {
+    const v = parseFloat(String(val).replace(/[^\d.\-eE+]/g, ""));
+    if (isNaN(v)) return false;
+    return Math.abs(v - q.ans) <= (q.tol === undefined ? 0.001 : q.tol);
+  }
+  if (q.type === "mc") return Number(val) === q.ans;
+  if (q.type === "text") return q.ans.some(a => normAns(a) === normAns(val));
+  return true;                       // open 题自评
+}
+function lessonProg(nodeId) {
+  const L = (window.LESSONS || {})[nodeId];
+  if (!L) return null;
+  const done = L.quiz.filter(q => (S.quiz[q.id] || {}).ok).length;
+  return { done, total: L.quiz.length, pct: Math.round(done / L.quiz.length * 100) };
+}
+function lessonsProg() {
+  const ids = Object.keys(window.LESSONS || {});
+  let done = 0, total = 0;
+  ids.forEach(id => { const p = lessonProg(id); done += p.done; total += p.total; });
+  return { done, total, pct: total ? Math.round(done / total * 100) : 0 };
+}
+
+/* ── LeetCode 状态 ──  0 未做 / 1 看了提示 / 2 独立做出 / 3 没做出来 */
+const allLC = () => LC_GROUPS.flatMap(g => g.problems);
+function lcSet(slug, s) {
+  if (s === 0) delete S.lc[slug];
+  else S.lc[slug] = { s, ts: Date.now() };
+  save();
+}
+function lcStat() {
+  const all = allLC();
+  const solo = all.filter(p => (S.lc[p.slug] || {}).s === 2).length;
+  const hint = all.filter(p => (S.lc[p.slug] || {}).s === 1).length;
+  const fail = all.filter(p => (S.lc[p.slug] || {}).s === 3).length;
+  return { solo, hint, fail, total: all.length, touched: solo + hint + fail };
+}
+function lcGroupStat(g) {
+  const solo = g.problems.filter(p => (S.lc[p.slug] || {}).s === 2).length;
+  const touched = g.problems.filter(p => S.lc[p.slug]).length;
+  return { solo, touched, total: g.problems.length };
+}
+// 一周前标记为「看了提示 / 没做出来」的题，该回来重做了
+function lcReview() {
+  const cut = Date.now() - 7 * DAY;
+  return allLC().filter(p => {
+    const r = S.lc[p.slug];
+    return r && (r.s === 1 || r.s === 3) && r.ts <= cut;
+  });
+}
+
 /* ── markdown（够用即可） ── */
 function esc(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -99,9 +160,23 @@ function md(src) {
       return;
     }
     blk.split(/\n{2,}/).forEach(para => {
-      const lines = para.split("\n").filter(l => l.trim() !== "");
+      let lines = para.split("\n").filter(l => l.trim() !== "");
       if (!lines.length) return;
 
+      if (/^#{2,4}\s/.test(lines[0])) {                 // 小标题
+        out.push(`<h3 class="lh3">${inline(lines[0].replace(/^#+\s*/, ""))}</h3>`);
+        lines = lines.slice(1);
+        if (!lines.length) return;
+      }
+      if (lines.every(l => l.trim().startsWith(">"))) { // 引用 / 提示框
+        const inner = md(lines.map(l => l.replace(/^\s*>\s?/, "")).join("\n"));
+        out.push(`<blockquote>${inner}</blockquote>`);
+        return;
+      }
+      if (lines.length === 1 && /^\$\$.*\$\$$/.test(lines[0].trim())) {
+        out.push(`<div class="formula">${inline(lines[0].trim().replace(/^\$\$|\$\$$/g, "").trim())}</div>`);
+        return;
+      }
       if (lines[0].trim().startsWith("|")) {            // 表格
         const rows = lines.filter(l => !/^\s*\|[\s|:-]+\|\s*$/.test(l));
         const cells = r => r.trim().replace(/^\||\|$/g, "").split("|").map(c => inline(c.trim()));
