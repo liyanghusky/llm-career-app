@@ -46,6 +46,7 @@ strong{color:#e6ecf7; font-weight:650}
 .tabs button{
   background:none; border:0; color:var(--tx2); font:inherit; font-size:14px;
   padding:8px 15px; border-radius:7px; cursor:pointer; transition:.15s; position:relative;
+  white-space:nowrap;
 }
 .tabs button:hover{color:var(--tx); background:#181d2b}
 .tabs button.on{color:#fff; background:#1e2537}
