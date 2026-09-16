@@ -9,7 +9,10 @@
   --wr:#b08442;            /* 琥珀 */
   --bad:#a8503f;           /* 朱 */
   --pu:#6d6384;            /* 藤 */
-  --serif:"Noto Serif SC","Noto Serif","Songti SC","Source Han Serif SC",Georgia,serif;
+  /* 拉丁字母走 Cambria/Georgia，汉字按可用性依次落到思源宋体 / 宋体。
+     Google Fonts 在国内常被墙，所以本地字体栈必须自己站得住。 */
+  --serif:Cambria,Georgia,"Noto Serif SC","Source Han Serif SC","Source Han Serif CN",
+          "Noto Serif CJK SC","Songti SC","STSong",SimSun,serif;
   --mono:"JetBrains Mono","SF Mono",Consolas,"Cascadia Code",monospace;
   --r:3px;
 }
