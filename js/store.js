@@ -2,11 +2,12 @@
 const KEY = "llm-career-v1";
 
 const S = Object.assign(
-  { nodes: {}, q: {}, steps: {}, days: [], fav: {}, quiz: {}, lc: {} },
+  { nodes: {}, q: {}, steps: {}, days: [], fav: {}, quiz: {}, lc: {}, infra: {} },
   JSON.parse(localStorage.getItem(KEY) || "{}")
 );
 if (!S.quiz) S.quiz = {};
 if (!S.lc) S.lc = {};
+if (!S.infra) S.infra = {};
 
 function save() {
   const t = today();

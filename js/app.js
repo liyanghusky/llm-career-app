@@ -4,7 +4,7 @@ const app = document.getElementById("app");
 const modal = document.getElementById("modal");
 const modalBody = document.getElementById("modalBody");
 
-const RENDER = { home: viewHome, roadmap: viewRoadmap, project: viewProject, bank: viewBank, drill: viewDrill, lc: viewLc };
+const RENDER = { home: viewHome, roadmap: viewRoadmap, project: viewProject, bank: viewBank, drill: viewDrill, lc: viewLc, infra: viewInfra };
 
 function render(keepScroll) {
   const y = window.scrollY;
@@ -116,6 +116,24 @@ document.body.addEventListener("click", e => {
     const id = qg.dataset.qgive;
     S.quiz[id] = { ...quizState(id), shown: true };
     save(); render(true); return;
+  }
+
+  // ── AI Infra 自评 ──
+  const inb = t.closest("[data-inset]");
+  if (inb) {
+    const [id, n] = inb.dataset.inset.split(":");
+    infraSet(id, +n); render(true); return;
+  }
+  const inj = t.closest("[data-injump]");
+  if (inj) {
+    const id = inj.dataset.injump;
+    const layer = INFRA_STACK.find(l => l.topics.some(x => x.id === id));
+    UI.open["il_" + layer.id] = true;
+    UI.open["it_" + id] = true;
+    render(true);
+    setTimeout(() => document.getElementById("in-" + id)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
+    return;
   }
 
   // ── LeetCode ──
