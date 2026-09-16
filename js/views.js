@@ -86,6 +86,13 @@ function viewHome() {
           鼠标移上去都会出现「详解」按钮。点开可以让 Claude 针对那一段展开讲、举例子、推公式，
           也能接着追问，像批注一样。对话会存在本地，下次打开还在。
         </div>
+        <div class="ai-off-note" style="margin:10px 0; padding:10px 13px; background:rgba(224,175,104,.06);
+          border-left:2px solid var(--wr); border-radius:0 7px 7px 0">
+          <b style="color:var(--wr)">✦ 想要「逐段问 AI 详解」？</b> 这个功能需要 Claude 运行时，
+          在 <a href="https://claude.ai/artifact/UbCacFuqM3WWL4VNw8i46k">Artifact 版</a> 打开就有：
+          正文和解析的每一段鼠标移上去会出现「详解」按钮，点开能让 Claude 针对那一段展开讲、
+          举例子、推公式，还能接着追问。当前这个静态版没有该功能，其余完全一致。
+        </div>
         <span style="color:var(--wr)">一条建议：</span>课后题一定要动笔算，面试题一定要出声讲。心里懂和讲得清楚是两回事，面试考的是后者。
       </div>
     </div>
