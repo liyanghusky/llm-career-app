@@ -14,6 +14,7 @@ function render(keepScroll) {
   const tabKey = view.startsWith("lesson:") ? "roadmap" : view;
   document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.view === tabKey));
   document.getElementById("streak").textContent = streak() ? `${streak()}d 连续` : "";
+  if (typeof aiDecorate === "function") aiDecorate();
   if (keepScroll) window.scrollTo(0, y);
   else window.scrollTo(0, 0);
 }
@@ -34,7 +35,10 @@ document.getElementById("tabs").addEventListener("click", e => {
 });
 
 /* ── 弹窗 ── */
-function openModal(html) { modalBody.innerHTML = html; modal.hidden = false; document.body.style.overflow = "hidden"; }
+function openModal(html) {
+  modalBody.innerHTML = html; modal.hidden = false; document.body.style.overflow = "hidden";
+  if (typeof aiDecorate === "function") aiDecorate();
+}
 function closeModal() { modal.hidden = true; document.body.style.overflow = ""; }
 document.getElementById("modalX").onclick = closeModal;
 modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });

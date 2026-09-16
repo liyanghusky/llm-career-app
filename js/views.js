@@ -80,6 +80,12 @@ function viewHome() {
         <b style="color:var(--tx)">项目库</b> 是简历的弹药，每个项目给了分天任务、简历写法和面试官会追问的点。<br>
         <b style="color:var(--tx)">题库 / 刷卡</b> 按分类刷，间隔重复安排复习，评「掌握」的卡会隔更久再出现。<br>
         <b style="color:var(--tx)">LeetCode</b> 精选 ${lc.total} 题按模式分组，解法默认折叠，逼你先自己想。<br><br>
+        <div class="ai-note" style="margin:10px 0; padding:10px 13px; background:rgba(122,162,247,.07);
+          border-left:2px solid var(--ac); border-radius:0 7px 7px 0">
+          <b style="color:var(--ac)">✦ AI 详解已启用</b> —— 课程正文、题目解析、算法题的<b style="color:var(--tx)">每一段</b>
+          鼠标移上去都会出现「详解」按钮。点开可以让 Claude 针对那一段展开讲、举例子、推公式，
+          也能接着追问，像批注一样。对话会存在本地，下次打开还在。
+        </div>
         <span style="color:var(--wr)">一条建议：</span>课后题一定要动笔算，面试题一定要出声讲。心里懂和讲得清楚是两回事，面试考的是后者。
       </div>
     </div>
