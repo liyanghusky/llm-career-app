@@ -3,16 +3,17 @@
 面向「想转机器学习 / 大语言模型岗位」的一站式学习与面试训练 Web App。
 纯静态前端，无后端、无依赖，进度存在浏览器本地，打开即用。
 
-**两个版本：**
+**两个地址，功能完全一致：**
 
-| | 地址 | 区别 |
-|---|---|---|
-| **Artifact 版**（推荐） | https://claude.ai/artifact/UbCacFuqM3WWL4VNw8i46k | 多一个 **逐段问 AI 详解** |
-| 静态版 | https://liyanghusky.github.io/llm-career-app/ | 无需登录，其余完全一致 |
+- **静态版** — https://liyanghusky.github.io/llm-career-app/ （填一次 API key 即可开启詳解）
+- **Artifact 版** — https://claude.ai/artifact/UbCacFuqM3WWL4VNw8i46k （无需配置，自动可用）
 
-### ✦ 逐段问 AI 详解
+界面是**侘寂 / 和紙**风格：米白纸张底纹、墨色正文、陶土色点缀、发丝级分隔线、衬线字体，
+和 [渡 / Kindle-Sender](https://github.com/liyanghusky) 同一套视觉语言。
 
-课程正文、题目解析、算法题思路的**每一个段落**，鼠标移上去都会出现「详解」按钮。
+### ✦ 逐段問 AI 詳解
+
+课程正文、题目解析、算法题思路的**每一个段落**，鼠标移上去都会出现「詳解」。
 点开是一个批注式面板：
 
 - 5 个预设追问：更简单地讲一遍 / 举个具体例子 / 为什么是这样 / 面试会怎么问 / 和什么有关联
@@ -21,8 +22,20 @@
 - 助教人设固定为「面向高中理科基础，先讲直觉再讲严谨，解释每个符号，高频考点补一行面试要点」
 - 对话存在浏览器本地，关掉再打开还在
 
-技术上走 Artifact 运行时的 `sample` capability，用的是**查看者自己的 Claude 账号**，
-不需要配置 API key。静态托管下 `window.claude` 不存在，按钮完全不出现，功能静默降级。
+**两条通路，自动择优：**
+
+| 环境 | 通路 | 需要配置 |
+|---|---|---|
+| Artifact 版 | Artifact 运行时的 `sample` capability，走你自己的 Claude 账号 | 无 |
+| 静态版 | 浏览器直连模型 API | 点 ⚙ 填一个 API key |
+
+静态版支持 Anthropic（官方允许浏览器直连）以及任意 OpenAI 兼容端点，内置 DeepSeek、
+Kimi、智谱 GLM、硅基流动、OpenAI 的预设，也可填自定义地址（本地 Ollama / one-api 都行）。
+
+> **关于 key 的安全性**：key 只写进你这台设备的 `localStorage`，请求由你的浏览器直接发往你选的
+> 服务商，不经过 GitHub Pages、不经过任何中间服务器，仓库里也没有任何 key。
+> 想撤销随时在 ⚙ 里把服务商切回「关闭詳解」，或清空浏览器数据。
+> 如果某个服务商报「连不上」，通常是它不允许浏览器跨域直连（CORS）—— Anthropic 和 DeepSeek 可以。
 
 ---
 
@@ -91,8 +104,10 @@ python -m http.server 8811
 index.html          应用外壳
 css/app.css         深色技术台面主题
 js/store.js         状态 / localStorage / 间隔重复 / markdown 渲染
-js/views.js         五个视图的渲染函数
+js/views.js         各视图的渲染函数
+js/ai.js            逐段 AI 詳解（Artifact sample / 自带 key 直连两条通路）
 js/app.js           路由与事件委托
+artifact.html       Artifact 版入口（无 doctype/head/body，由平台包壳）
 data/roadmap.js     学习路线（window.ROADMAP）
 data/projects.js    项目库（window.PROJECTS / PROJECT_COMBOS）
 data/questions.js   题库（window.QCATS / QUESTIONS）

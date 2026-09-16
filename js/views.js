@@ -80,18 +80,16 @@ function viewHome() {
         <b style="color:var(--tx)">项目库</b> 是简历的弹药，每个项目给了分天任务、简历写法和面试官会追问的点。<br>
         <b style="color:var(--tx)">题库 / 刷卡</b> 按分类刷，间隔重复安排复习，评「掌握」的卡会隔更久再出现。<br>
         <b style="color:var(--tx)">LeetCode</b> 精选 ${lc.total} 题按模式分组，解法默认折叠，逼你先自己想。<br><br>
-        <div class="ai-note" style="margin:10px 0; padding:10px 13px; background:rgba(122,162,247,.07);
-          border-left:2px solid var(--ac); border-radius:0 7px 7px 0">
-          <b style="color:var(--ac)">✦ AI 详解已启用</b> —— 课程正文、题目解析、算法题的<b style="color:var(--tx)">每一段</b>
-          鼠标移上去都会出现「详解」按钮。点开可以让 Claude 针对那一段展开讲、举例子、推公式，
-          也能接着追问，像批注一样。对话会存在本地，下次打开还在。
+        <div class="ai-note callout">
+          <b>✦ AI 詳解已启用</b> —— 课程正文、题目解析、算法题的<b>每一段</b>，鼠标移上去都会出现
+          「詳解」。点开可以让模型针对那一段展开讲、举例子、推公式，也能接着追问，像批注一样。
+          对话存在本地，下次打开还在。
         </div>
-        <div class="ai-off-note" style="margin:10px 0; padding:10px 13px; background:rgba(224,175,104,.06);
-          border-left:2px solid var(--wr); border-radius:0 7px 7px 0">
-          <b style="color:var(--wr)">✦ 想要「逐段问 AI 详解」？</b> 这个功能需要 Claude 运行时，
-          在 <a href="https://claude.ai/artifact/UbCacFuqM3WWL4VNw8i46k">Artifact 版</a> 打开就有：
-          正文和解析的每一段鼠标移上去会出现「详解」按钮，点开能让 Claude 针对那一段展开讲、
-          举例子、推公式，还能接着追问。当前这个静态版没有该功能，其余完全一致。
+        <div class="ai-off-note callout warm">
+          <b>✦ 开启「逐段問 AI 詳解」</b> —— 点右上角 <b>⚙</b> 填一个 API key（Anthropic、DeepSeek、
+          Kimi、智谱都行，key 只存在你自己的浏览器里）。开启后，正文和解析的每一段鼠标移上去
+          都会出现「詳解」，点开能让模型针对那一段展开讲、举例子、推公式，还能接着追问。
+          在 <a href="https://claude.ai/artifact/UbCacFuqM3WWL4VNw8i46k">Artifact 版</a> 打开则无需配置，直接可用。
         </div>
         <span style="color:var(--wr)">一条建议：</span>课后题一定要动笔算，面试题一定要出声讲。心里懂和讲得清楚是两回事，面试考的是后者。
       </div>
@@ -567,6 +565,8 @@ function dataModal() {
   <div class="card tiny" style="line-height:2">
     路线图 ${r.done}/${r.total} · 题目掌握 ${q.got} 模糊 ${q.fuzzy} · 项目步骤 ${Object.keys(S.steps).length} 项 · 学习天数 ${S.days.length} 天
   </div>
+  <h4>AI 詳解</h4>
+  <div>${typeof aiSettingsHTML === "function" ? aiSettingsHTML() : ""}</div>
   <h4>操作</h4>
   <div style="display:flex;gap:9px;flex-wrap:wrap">
     <button class="btn" id="expBtn">导出 JSON</button>

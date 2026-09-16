@@ -1,11 +1,38 @@
-/* 逐块「问 AI 详解」
-   只在 Artifact 运行时可用（claude.use("sample")）。
-   静态托管（GitHub Pages）下 window.claude 不存在 → 整个功能静默隐藏。
+/* 逐段「问 AI 详解」
+   两条通路：
+   1) Artifact 运行时 claude.use("sample") —— 用查看者自己的 Claude 账号，无需配置
+   2) 自带 API key，浏览器直连模型 —— 静态托管（GitHub Pages）下使用
+      key 只存在本机 localStorage，只发往你选定的那个服务商，不经过任何第三方
 */
-const AIKEY = "llm-career-ai-v1";
-const AI = { sample: null, ready: false, ctl: {} };
-const AIT = JSON.parse(localStorage.getItem(AIKEY) || "{}");   // aiid -> {turns, open}
-function aiSave() { try { localStorage.setItem(AIKEY, JSON.stringify(AIT)); } catch {} }
+const AIKEY  = "llm-career-ai-v1";
+const AICKEY = "llm-career-ai-cfg";
+
+const AI = { sample: null, runtime: false, ctl: {} };
+const AIT = JSON.parse(localStorage.getItem(AIKEY) || "{}");     // aiid -> {turns, open}
+let AICFG = Object.assign(
+  { mode: "off", key: "", base: "", model: "" },
+  JSON.parse(localStorage.getItem(AICKEY) || "{}")
+);
+function aiSave()    { try { localStorage.setItem(AIKEY, JSON.stringify(AIT)); } catch {} }
+function aiCfgSave() { try { localStorage.setItem(AICKEY, JSON.stringify(AICFG)); } catch {} }
+
+/* 服务商预设 —— base 为 OpenAI 兼容端点 */
+const AI_VENDORS = [
+  { id:"anthropic", name:"Anthropic（Claude）", base:"", model:"claude-sonnet-5",
+    keyHint:"sk-ant-…", note:"官方支持浏览器直连。效果最好。" },
+  { id:"deepseek",  name:"DeepSeek", base:"https://api.deepseek.com/v1", model:"deepseek-chat",
+    keyHint:"sk-…", note:"国内可直连，便宜，中文讲解够用。" },
+  { id:"moonshot",  name:"Kimi（Moonshot）", base:"https://api.moonshot.cn/v1", model:"moonshot-v1-8k",
+    keyHint:"sk-…", note:"国内可直连。" },
+  { id:"zhipu",     name:"智谱 GLM", base:"https://open.bigmodel.cn/api/paas/v4", model:"glm-4-flash",
+    keyHint:"…", note:"glm-4-flash 免费额度大。" },
+  { id:"silicon",   name:"硅基流动", base:"https://api.siliconflow.cn/v1", model:"Qwen/Qwen2.5-14B-Instruct",
+    keyHint:"sk-…", note:"聚合多家开源模型。" },
+  { id:"openai",    name:"OpenAI", base:"https://api.openai.com/v1", model:"gpt-4o-mini",
+    keyHint:"sk-…", note:"国内需自备网络。" },
+  { id:"custom",    name:"自定义 OpenAI 兼容端点", base:"", model:"",
+    keyHint:"你的 key", note:"本地 Ollama / one-api / 任何兼容服务。" }
+];
 
 const AI_PRESETS = [
   ["更简单地讲一遍", "这一段我没看懂，请用更简单的话、从头讲一遍，可以打比方。"],
@@ -28,13 +55,110 @@ const AI_RULES = `你是一个机器学习/大语言模型自学网站的助教�
 - 默认控制在 400 字以内。他明确要求展开时才写长。
 - 可以用 markdown：**粗体**、\`代码\`、- 列表、\`\`\`代码块\`\`\`。不要用一级二级标题。`;
 
+const aiOn = () => AI.runtime || (AICFG.mode !== "off" && !!AICFG.key);
+
+/* ── 统一调用层 ── */
+async function aiCall(ctxTurn, turns, question, { onText, signal }) {
+  // 1) Artifact 运行时
+  if (AI.runtime) {
+    const input = [{ role: "user", content: ctxTurn }];
+    turns.forEach(m => input.push({ role: m.role, content: m.content }));
+    input.push({ role: "user", content: question });
+    const { text } = await AI.sample(input, { signal, cache: false, onText: u => onText(u.text) });
+    return text;
+  }
+  // 2) 自带 key
+  const v = AI_VENDORS.find(x => x.id === AICFG.mode);
+  if (!v) throw { code: "no_config" };
+  const msgs = [...turns.map(m => ({ role: m.role, content: m.content })),
+                { role: "user", content: question }];
+  return AICFG.mode === "anthropic"
+    ? anthropicStream(ctxTurn, msgs, { onText, signal })
+    : openaiStream(ctxTurn, msgs, { onText, signal });
+}
+
+async function readSSE(res, signal, pick, onText) {
+  if (!res.ok) {
+    let detail = "";
+    try { detail = (await res.text()).slice(0, 300); } catch {}
+    throw { code: res.status === 401 || res.status === 403 ? "bad_key"
+          : res.status === 429 ? "rate_limited" : "http_" + res.status, detail };
+  }
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", acc = "";
+  for (;;) {
+    if (signal?.aborted) { reader.cancel().catch(() => {}); throw { code: "cancelled", text: acc }; }
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split("\n");
+    buf = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith("data:")) continue;
+      const raw = line.slice(5).trim();
+      if (!raw || raw === "[DONE]") continue;
+      let j; try { j = JSON.parse(raw); } catch { continue; }
+      const piece = pick(j);
+      if (piece) { acc += piece; onText(acc); }
+    }
+  }
+  if (!acc.trim()) throw { code: "empty_completion" };
+  return acc;
+}
+
+function anthropicStream(sys, msgs, { onText, signal }) {
+  return fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST", signal,
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": AICFG.key,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: AICFG.model || "claude-sonnet-5",
+      max_tokens: 1600, stream: true, system: sys, messages: msgs
+    })
+  }).then(r => readSSE(r, signal,
+    j => (j.type === "content_block_delta" && j.delta?.type === "text_delta") ? j.delta.text : "",
+    onText));
+}
+
+function openaiStream(sys, msgs, { onText, signal }) {
+  const base = (AICFG.base || "").replace(/\/+$/, "");
+  return fetch(base + "/chat/completions", {
+    method: "POST", signal,
+    headers: { "content-type": "application/json", authorization: "Bearer " + AICFG.key },
+    body: JSON.stringify({
+      model: AICFG.model, stream: true, max_tokens: 1600,
+      messages: [{ role: "system", content: sys }, ...msgs]
+    })
+  }).then(r => readSSE(r, signal, j => j.choices?.[0]?.delta?.content || "", onText));
+}
+
+function aiErr(e) {
+  const c = e && e.code;
+  if (c === "bad_key")        return "API key 不对，或者没有权限。去 ⚙ 里检查一下。";
+  if (c === "rate_limited")   return "请求太频繁，或者余额/额度不够了。等一会儿再试。";
+  if (c === "no_config")      return "还没配置 AI。点右上角 ⚙ 设置一下。";
+  if (c === "not_granted")    return "你拒绝了这个页面调用 Claude。刷新页面重新允许才能用。";
+  if (c === "session_expired")return "登录过期了，重新登录 claude.ai 再试。";
+  if (c === "prompt_too_large")return "这段内容太长了，选一小段再问。";
+  if (c === "refused")        return "模型不愿意回答，换个问法试试。";
+  if (c === "empty_completion")return "没生成出内容，换个问法试试。";
+  if (e instanceof TypeError || c === undefined)
+    return "连不上这个服务商 —— 多半是它不允许浏览器直连（CORS）。换 Anthropic 或 DeepSeek 试试，它们支持。";
+  if (String(c).startsWith("http_")) return "服务商返回错误 " + String(c).slice(5) + "。" + (e.detail || "");
+  return "出了点问题，再试一次。";
+}
+
+/* ── 内容块装饰 ── */
 function aiHash(s) {
   let h = 5381;
   for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
   return "a" + (h >>> 0).toString(36);
 }
-
-/* 哪些容器里的内容块可以被追问 */
 const AI_CONTAINERS = [".lsec", ".qz-q", ".qz-why", ".qz-hint", ".q-b",
   ".lcp-b", ".lc-pattern", ".lc-intro", ".node-d", ".keybox", ".hint-on"];
 const AI_BLOCKS = ":scope > p, :scope > pre, :scope > blockquote, :scope > table, " +
@@ -54,20 +178,24 @@ function aiCtx(el) {
 }
 
 function aiDecorate() {
-  if (!AI.ready) return;
+  document.body.classList.toggle("ai-on", aiOn());
+  if (!aiOn()) {
+    document.querySelectorAll(".aibtn").forEach(b => b.remove());
+    document.querySelectorAll("[data-aiid]").forEach(e => { delete e.dataset.aiid; e.classList.remove("aiblk"); });
+    return;
+  }
   document.querySelectorAll(AI_CONTAINERS.join(",")).forEach(box => {
     box.querySelectorAll(AI_BLOCKS).forEach(el => {
       if (el.dataset.aiid) return;
       const txt = (el.innerText || "").trim();
-      if (txt.length < 12) return;                       // 太短的不值得问
+      if (txt.length < 12) return;
       const id = aiHash(txt.slice(0, 400));
       el.dataset.aiid = id;
       el.classList.add("aiblk");
       const b = document.createElement("button");
-      b.className = "aibtn";
-      b.type = "button";
+      b.className = "aibtn"; b.type = "button";
       b.title = "让 AI 详细解释这一段";
-      b.textContent = "详解";
+      b.textContent = "詳解";
       b.onclick = ev => { ev.stopPropagation(); aiToggle(id, el); };
       el.appendChild(b);
       if (AIT[id] && AIT[id].open) aiMount(id, el);
@@ -81,10 +209,7 @@ function aiToggle(id, el) {
   aiSave();
   if (AIT[id].open) {
     aiMount(id, el);
-    if (!AIT[id].turns.length) {
-      const p = document.getElementById("aip-" + id);
-      p?.querySelector(".ai-ta")?.focus();
-    }
+    if (!AIT[id].turns.length) document.getElementById("aip-" + id)?.querySelector(".ai-ta")?.focus();
   } else {
     document.getElementById("aip-" + id)?.remove();
   }
@@ -93,8 +218,7 @@ function aiToggle(id, el) {
 function aiMount(id, el) {
   if (document.getElementById("aip-" + id)) return;
   const p = document.createElement("div");
-  p.className = "aipanel";
-  p.id = "aip-" + id;
+  p.className = "aipanel"; p.id = "aip-" + id;
   el.insertAdjacentElement("afterend", p);
   aiPaint(id);
 }
@@ -104,18 +228,17 @@ function aiPaint(id) {
   if (!p) return;
   const t = AIT[id] || { turns: [] };
   const busy = !!AI.ctl[id];
-
   p.innerHTML = `
     <div class="ai-head">
-      <span class="ai-tag">AI 详解</span>
-      ${t.turns.length ? `<button class="ai-x" data-aiclear="${id}" title="清空这段对话">清空</button>` : ""}
-      <button class="ai-x" data-aiclose="${id}" title="收起">✕</button>
+      <span class="ai-tag">詳解</span>
+      ${t.turns.length ? `<button class="ai-x" data-aiclear="${id}">清空</button>` : ""}
+      <button class="ai-x" data-aiclose="${id}">✕</button>
     </div>
     <div class="ai-body">
       ${t.turns.map(m => m.role === "user"
         ? `<div class="ai-u">${md(m.content)}</div>`
         : `<div class="ai-a">${md(m.content)}</div>`).join("")}
-      ${busy ? `<div class="ai-a ai-live" id="ail-${id}"><span class="ai-think">正在思考…</span></div>` : ""}
+      ${busy ? `<div class="ai-a ai-live" id="ail-${id}"><span class="ai-think">正在思考</span></div>` : ""}
     </div>
     ${busy
       ? `<div class="ai-ctl"><button class="btn sec sm" data-aistop="${id}">停止</button></div>`
@@ -123,74 +246,98 @@ function aiPaint(id) {
            ${AI_PRESETS.map((x, i) => `<button class="fbtn" data-aiask="${id}:${i}">${x[0]}</button>`).join("")}
          </div>
          <div class="ai-ctl">
-           <textarea class="ai-ta" data-aita="${id}" rows="1"
-             placeholder="哪里不懂就问哪里…"></textarea>
-           <button class="btn sm" data-aisend="${id}">问</button>
-         </div>`}
-  `;
+           <textarea class="ai-ta" data-aita="${id}" rows="1" placeholder="哪里不懂就问哪里…"></textarea>
+           <button class="btn sm" data-aisend="${id}">問</button>
+         </div>`}`;
 }
 
 async function aiAsk(id, question) {
-  if (!AI.ready || AI.ctl[id]) return;
+  if (!aiOn() || AI.ctl[id]) return;
   const el = document.querySelector(`[data-aiid="${id}"]`);
   if (!el) return;
-
   const t = (AIT[id] = AIT[id] || { turns: [], open: true });
-  const blockText = (el.innerText || "").replace(/详解$/, "").trim().slice(0, 3000);
-
-  // 第一轮带上完整上下文；后续只追加问题（页面自己维护对话）
-  const input = [{ role: "user", content: `${AI_RULES}\n\n${aiCtx(el)}\n\n学习者正在看的这段内容：\n"""\n${blockText}\n"""` }];
-  t.turns.forEach(m => input.push({ role: m.role, content: m.content }));
-  input.push({ role: "user", content: question });
+  const blockText = (el.innerText || "").replace(/詳解\s*$/, "").trim().slice(0, 3000);
+  const ctxTurn = `${AI_RULES}\n\n${aiCtx(el)}\n\n学习者正在看的这段内容：\n"""\n${blockText}\n"""`;
 
   t.turns.push({ role: "user", content: question });
   const ctl = new AbortController();
   AI.ctl[id] = ctl;
   aiSave(); aiPaint(id);
 
-  let acc = "";
   try {
-    const { text } = await AI.sample(input, {
+    const text = await aiCall(ctxTurn, t.turns.slice(0, -1), question, {
       signal: ctl.signal,
-      cache: false,
-      onText: ({ text }) => {
-        acc = text;
-        const live = document.getElementById("ail-" + id);
-        if (live) live.innerHTML = md(text);
-      }
+      onText: txt => { const live = document.getElementById("ail-" + id); if (live) live.innerHTML = md(txt); }
     });
     t.turns.push({ role: "assistant", content: text });
   } catch (e) {
-    const keep = e && e.text;
-    if (keep) t.turns.push({ role: "assistant", content: keep + "\n\n*（回答被中断）*" });
-    else if (e && e.code === "cancelled") { /* 用户主动停止，不留痕 */ }
-    else t.turns.push({ role: "assistant", content: "*" + aiErr(e && e.code) + "*" });
+    if (e && (e.code === "cancelled" || e.name === "AbortError")) {
+      if (e.text) t.turns.push({ role: "assistant", content: e.text + "\n\n*（已停止）*" });
+      else t.turns.pop();
+    } else if (e && e.text) {
+      t.turns.push({ role: "assistant", content: e.text + "\n\n*（回答被中断）*" });
+    } else {
+      t.turns.push({ role: "assistant", content: "*" + aiErr(e) + "*" });
+    }
   } finally {
     delete AI.ctl[id];
     aiSave(); aiPaint(id);
   }
 }
 
-function aiErr(code) {
-  switch (code) {
-    case "not_granted": return "你拒绝了这个页面调用 Claude。刷新页面后重新允许才能用。";
-    case "rate_limited": return "问得太快了，或者今天的用量到上限了。等一会儿再试。";
-    case "session_expired": return "登录过期了，重新登录 claude.ai 再试。";
-    case "prompt_too_large": return "这段内容太长了，选一小段再问。";
-    case "refused": return "Claude 不愿意回答这个问题，换个问法试试。";
-    case "empty_completion": return "没生成出内容，换个问法试试。";
-    default: return "出了点问题，再试一次。";
+/* ── 设置面板（嵌在 ⚙ 弹窗里）── */
+function aiSettingsHTML() {
+  if (AI.runtime) {
+    return `<div class="rbox">正在 Claude Artifact 里运行，<b>詳解已自动可用</b>，用的是你自己的 Claude 账号，不需要配置 API key。</div>`;
+  }
+  const v = AI_VENDORS.find(x => x.id === AICFG.mode);
+  return `
+  <p class="tiny muted" style="margin-bottom:12px">
+    静态网页没法直接借用 Claude，需要你自己的 API key 才能开启「詳解」。
+    <b>key 只保存在这台设备的浏览器里</b>，请求直接从你的浏览器发往你选的服务商，不经过我或任何第三方。
+  </p>
+  <div class="aicfg">
+    <label>服务商</label>
+    <select id="aiVendor">
+      <option value="off"${AICFG.mode === "off" ? " selected" : ""}>关闭詳解</option>
+      ${AI_VENDORS.map(x => `<option value="${x.id}"${AICFG.mode === x.id ? " selected" : ""}>${x.name}</option>`).join("")}
+    </select>
+    ${v ? `<p class="tiny muted" style="margin:-4px 0 4px">${v.note}</p>` : ""}
+    ${AICFG.mode !== "off" ? `
+      <label>API Key</label>
+      <input id="aiKey" type="password" autocomplete="off" spellcheck="false"
+             placeholder="${v ? v.keyHint : ""}" value="${AICFG.key ? AICFG.key.replace(/./g, "•") : ""}"
+             data-has="${AICFG.key ? 1 : 0}">
+      ${AICFG.mode !== "anthropic" ? `
+        <label>接口地址（OpenAI 兼容）</label>
+        <input id="aiBase" spellcheck="false" value="${AICFG.base || ""}" placeholder="https://api.example.com/v1">` : ""}
+      <label>模型</label>
+      <input id="aiModel" spellcheck="false" value="${AICFG.model || ""}" placeholder="${v ? v.model : ""}">
+      <div style="display:flex;gap:9px;margin-top:6px;align-items:center;flex-wrap:wrap">
+        <button class="btn sm" id="aiSaveBtn">保存</button>
+        <button class="btn sec sm" id="aiTestBtn">测试连接</button>
+        <span id="aiTestMsg" class="tiny muted"></span>
+      </div>` : ""}
+  </div>`;
+}
+
+async function aiTest(msgEl) {
+  msgEl.textContent = "连接中…";
+  try {
+    const txt = await aiCall("你是一个测试用的助手。", [], "只回复两个字：可以", { onText: () => {} });
+    msgEl.textContent = "✓ 通了：" + txt.trim().slice(0, 20);
+    msgEl.style.color = "var(--ok)";
+  } catch (e) {
+    msgEl.textContent = "✕ " + aiErr(e);
+    msgEl.style.color = "var(--bad)";
   }
 }
 
 /* ── 事件（独立监听，不触发全局 render，避免打断流式输出）── */
 document.addEventListener("click", e => {
   const ask = e.target.closest("[data-aiask]");
-  if (ask) {
-    const [id, i] = ask.dataset.aiask.split(":");
-    aiAsk(id, AI_PRESETS[+i][1]);
-    return;
-  }
+  if (ask) { const [id, i] = ask.dataset.aiask.split(":"); aiAsk(id, AI_PRESETS[+i][1]); return; }
+
   const send = e.target.closest("[data-aisend]");
   if (send) {
     const id = send.dataset.aisend;
@@ -201,6 +348,7 @@ document.addEventListener("click", e => {
   }
   const stop = e.target.closest("[data-aistop]");
   if (stop) { AI.ctl[stop.dataset.aistop]?.abort(); return; }
+
   const cls = e.target.closest("[data-aiclose]");
   if (cls) {
     const id = cls.dataset.aiclose;
@@ -209,10 +357,35 @@ document.addEventListener("click", e => {
     return;
   }
   const clr = e.target.closest("[data-aiclear]");
-  if (clr) {
-    const id = clr.dataset.aiclear;
-    AIT[id].turns = []; aiSave(); aiPaint(id);
+  if (clr) { const id = clr.dataset.aiclear; AIT[id].turns = []; aiSave(); aiPaint(id); return; }
+
+  if (e.target.id === "aiSaveBtn") {
+    const keyEl = document.getElementById("aiKey");
+    if (keyEl && !/^•+$/.test(keyEl.value)) AICFG.key = keyEl.value.trim();
+    const baseEl = document.getElementById("aiBase");
+    const vend = AI_VENDORS.find(x => x.id === AICFG.mode);
+    AICFG.base = baseEl ? baseEl.value.trim() : (vend ? vend.base : "");
+    if (!AICFG.base && vend) AICFG.base = vend.base;
+    const mEl = document.getElementById("aiModel");
+    AICFG.model = (mEl && mEl.value.trim()) || (vend ? vend.model : "");
+    aiCfgSave();
+    const msg = document.getElementById("aiTestMsg");
+    if (msg) { msg.textContent = "已保存"; msg.style.color = "var(--ok)"; }
+    aiDecorate();
     return;
+  }
+  if (e.target.id === "aiTestBtn") { aiTest(document.getElementById("aiTestMsg")); return; }
+}, true);
+
+document.addEventListener("change", e => {
+  if (e.target.id === "aiVendor") {
+    const vend = AI_VENDORS.find(x => x.id === e.target.value);
+    AICFG.mode = e.target.value;
+    if (vend) { AICFG.base = vend.base; AICFG.model = vend.model; }
+    aiCfgSave();
+    const box = document.querySelector(".aicfg")?.parentElement;
+    if (box) box.innerHTML = aiSettingsHTML();
+    aiDecorate();
   }
 }, true);
 
@@ -225,20 +398,20 @@ document.addEventListener("keydown", e => {
   }
 }, true);
 
-/* 输入框自动长高 */
 document.addEventListener("input", e => {
   const ta = e.target.closest?.("[data-aita]");
   if (ta) { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 160) + "px"; }
+  if (e.target.id === "aiKey" && e.target.dataset.has === "1") {
+    e.target.dataset.has = "0";                       // 开始改了就不再当作掩码
+  }
 }, true);
 
-/* ── 启动 ── */
+/* ── 启动：优先 Artifact 运行时 ── */
 (async () => {
-  if (!window.claude || typeof window.claude.use !== "function") return;
-  let s = null;
-  try { s = await window.claude.use("sample"); } catch { s = null; }
-  if (!s) return;
-  AI.sample = s;
-  AI.ready = true;
-  document.body.classList.add("ai-on");
+  if (window.claude && typeof window.claude.use === "function") {
+    let s = null;
+    try { s = await window.claude.use("sample"); } catch { s = null; }
+    if (s) { AI.sample = s; AI.runtime = true; }
+  }
   aiDecorate();
 })();
