@@ -533,9 +533,31 @@ body{position:relative}
 
 .aic-head{
   display:flex; align-items:flex-start; gap:9px; padding:11px 15px 10px;
-  border-bottom:1px solid var(--line); cursor:pointer; background:rgba(120,110,90,.05);
-  border-radius:var(--r) var(--r) 0 0;
+  border-bottom:1px solid var(--line); cursor:grab; background:rgba(120,110,90,.05);
+  border-radius:var(--r) var(--r) 0 0; user-select:none;
 }
+.aic-head:active{cursor:grabbing}
+
+/* 拖出来的浮窗 */
+.aicard.floating{
+  position:fixed !important; right:auto; z-index:70;
+  box-shadow:0 18px 50px rgba(35,33,28,.24); border-color:var(--line2);
+}
+.aicard.floating .aic-head{background:rgba(156,107,79,.10)}
+.aicard.nodrag-anim{transition:none !important}
+body.ai-dragging-card{user-select:none; cursor:grabbing}
+body.ai-dragging-corner{user-select:none; cursor:nwse-resize}
+
+.aic-corner{
+  position:absolute; right:0; bottom:0; width:16px; height:16px;
+  cursor:nwse-resize; opacity:.5; transition:opacity .2s;
+}
+.aic-corner::after{
+  content:""; position:absolute; right:3px; bottom:3px; width:8px; height:8px;
+  border-right:1.5px solid var(--tx3); border-bottom:1.5px solid var(--tx3);
+}
+.aicard:hover .aic-corner{opacity:1}
+.aic-corner:hover::after{border-color:var(--ac)}
 .aic-head:hover .aic-q{color:var(--tx)}
 .aic-q{
   flex:1; min-width:0; font-size:12px; line-height:1.6; color:var(--tx3); font-weight:300;
