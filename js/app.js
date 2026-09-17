@@ -127,6 +127,12 @@ document.body.addEventListener("click", e => {
   if (iqm) { UI.iqmode = iqm.dataset.iqmode || null; render(true); return; }
   const iqs = t.closest("[data-iqset]");
   if (iqs) { const [id, m] = iqs.dataset.iqset.split(":"); iqSet(id, +m); render(true); return; }
+  const ips = t.closest("[data-ipjstep]");
+  if (ips) {
+    const k = ips.dataset.ipjstep;
+    S.ipj[k] ? delete S.ipj[k] : (S.ipj[k] = 1);
+    save(); render(true); return;
+  }
   const lbs = t.closest("[data-labset]");
   if (lbs) { const [id, v] = lbs.dataset.labset.split(":"); labSet(id, +v); render(true); return; }
 

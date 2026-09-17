@@ -8,7 +8,7 @@ const barEl = (p, c) => `<div class="bar"><i style="width:${p}%;background:${c |
 /* ════════ 总览 ════════ */
 function viewHome() {
   const r = roadProg(), q = qProg(), pj = projAny(), due = dueList().length;
-  const lp = lessonsProg(), lc = lcStat();
+  const lp = lessonsProg("main"), lc = lcStat();
 
   // 下一步建议
   const nexts = [];
@@ -375,14 +375,18 @@ function viewLesson(nodeId) {
   if (!L) return `<div class="empty">这一节的详细课程还没写，先看路线图里的要点。</div>`;
   const st = ROADMAP.find(s => s.nodes.some(n => n.id === nodeId));
   const p = lessonProg(nodeId);
-  const sibs = Object.keys(LESSONS);
+  const track = L.track || "main";
+  const sibs = lessonIds(track);
   const idx = sibs.indexOf(nodeId);
+  const crumb = L.crumb || (st ? st.name : "");
+  const backTo = track === "infra" ? "infra" : "roadmap";
+  const backTxt = track === "infra" ? "← Infra 主攻线" : "← 路线图";
 
   return `
   <div class="lesson">
     <div class="lbar">
-      <span class="fbtn" data-go="roadmap">← 路线图</span>
-      <span class="tiny muted">${st ? st.name : ""}</span>
+      <span class="fbtn" data-go="${backTo}">${backTxt}</span>
+      <span class="tiny muted">${crumb}</span>
       <span class="tiny mono" style="margin-left:auto;color:var(--tx3)">${L.est}</span>
     </div>
 

@@ -2,7 +2,7 @@
 const KEY = "llm-career-v1";
 
 const S = Object.assign(
-  { nodes: {}, q: {}, steps: {}, days: [], fav: {}, quiz: {}, lc: {}, infra: {}, iq: {}, lab: {} },
+  { nodes: {}, q: {}, steps: {}, days: [], fav: {}, quiz: {}, lc: {}, infra: {}, iq: {}, lab: {}, ipj: {} },
   JSON.parse(localStorage.getItem(KEY) || "{}")
 );
 if (!S.quiz) S.quiz = {};
@@ -10,6 +10,7 @@ if (!S.lc) S.lc = {};
 if (!S.infra) S.infra = {};
 if (!S.iq) S.iq = {};
 if (!S.lab) S.lab = {};
+if (!S.ipj) S.ipj = {};
 
 function save() {
   const t = today();
@@ -109,11 +110,16 @@ function lessonProg(nodeId) {
   const done = L.quiz.filter(q => (S.quiz[q.id] || {}).ok).length;
   return { done, total: L.quiz.length, pct: Math.round(done / L.quiz.length * 100) };
 }
-function lessonsProg() {
-  const ids = Object.keys(window.LESSONS || {});
+function lessonsProg(track) {
+  const L = window.LESSONS || {};
+  const ids = Object.keys(L).filter(id => (L[id].track || "main") === (track || "main"));
   let done = 0, total = 0;
   ids.forEach(id => { const p = lessonProg(id); done += p.done; total += p.total; });
-  return { done, total, pct: total ? Math.round(done / total * 100) : 0 };
+  return { done, total, count: ids.length, pct: total ? Math.round(done / total * 100) : 0 };
+}
+function lessonIds(track) {
+  const L = window.LESSONS || {};
+  return Object.keys(L).filter(id => (L[id].track || "main") === (track || "main"));
 }
 
 /* ── LeetCode 状态 ──  0 未做 / 1 看了提示 / 2 独立做出 / 3 没做出来 */
@@ -167,6 +173,17 @@ function labStat() {
   const all = window.INFRA_LABS || [];
   return { done: all.filter(l => (S.lab[l.id] || {}).v === 2).length,
            doing: all.filter(l => (S.lab[l.id] || {}).v === 1).length, total: all.length };
+}
+
+/* ── Infra 项目进度（按步骤打勾）── */
+function ipjProg(pj) {
+  const done = pj.steps.filter((_, i) => S.ipj[pj.id + "_" + i]).length;
+  return { done, total: pj.steps.length, pct: Math.round(done / pj.steps.length * 100) };
+}
+function ipjStat() {
+  const all = window.INFRA_PROJECTS || [];
+  return { started: all.filter(p => ipjProg(p).done > 0).length,
+           fin: all.filter(p => ipjProg(p).pct === 100).length, total: all.length };
 }
 
 /* ── markdown（够用即可） ── */
