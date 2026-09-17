@@ -2,12 +2,14 @@
 const KEY = "llm-career-v1";
 
 const S = Object.assign(
-  { nodes: {}, q: {}, steps: {}, days: [], fav: {}, quiz: {}, lc: {}, infra: {} },
+  { nodes: {}, q: {}, steps: {}, days: [], fav: {}, quiz: {}, lc: {}, infra: {}, iq: {}, lab: {} },
   JSON.parse(localStorage.getItem(KEY) || "{}")
 );
 if (!S.quiz) S.quiz = {};
 if (!S.lc) S.lc = {};
 if (!S.infra) S.infra = {};
+if (!S.iq) S.iq = {};
+if (!S.lab) S.lab = {};
 
 function save() {
   const t = today();
@@ -142,6 +144,31 @@ function lcReview() {
   });
 }
 
+/* ── Infra 主攻线：题库与实验室 ── */
+function iqSet(id, m) {
+  if (m === 0) delete S.iq[id]; else S.iq[id] = { m, ts: Date.now() };
+  save();
+}
+function iqStat() {
+  const all = window.INFRA_QA || [];
+  const got = all.filter(q => (S.iq[q.id] || {}).m === 2).length;
+  const fuzzy = all.filter(q => (S.iq[q.id] || {}).m === 1).length;
+  return { got, fuzzy, total: all.length, pct: all.length ? Math.round(got / all.length * 100) : 0 };
+}
+function iqCatStat(key) {
+  const qs = (window.INFRA_QA || []).filter(q => q.cat === key);
+  return { got: qs.filter(q => (S.iq[q.id] || {}).m === 2).length, total: qs.length };
+}
+function labSet(id, v) {
+  if (!v) delete S.lab[id]; else S.lab[id] = { v, ts: Date.now() };
+  save();
+}
+function labStat() {
+  const all = window.INFRA_LABS || [];
+  return { done: all.filter(l => (S.lab[l.id] || {}).v === 2).length,
+           doing: all.filter(l => (S.lab[l.id] || {}).v === 1).length, total: all.length };
+}
+
 /* ── markdown（够用即可） ── */
 function esc(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -186,13 +213,32 @@ function md(src) {
         out.push(h + "</tbody></table>");
         return;
       }
-      if (/^\s*[-\d]/.test(lines[0]) && lines.every(l => /^\s*(-|\d+\.)\s/.test(l))) {
-        const ord = /^\s*\d+\./.test(lines[0]);
-        const items = lines.map(l => `<li>${inline(l.replace(/^\s*(-|\d+\.)\s*/, ""))}</li>`).join("");
+      // 段内混排：连续的列表行聚成列表，其余聚成段落
+      let pbuf = [], lbuf = [], ord = false;
+      const flushP = () => {
+        if (!pbuf.length) return;
+        out.push(`<p>${pbuf.map(inline).join("<br>")}</p>`);
+        pbuf = [];
+      };
+      const flushL = () => {
+        if (!lbuf.length) return;
+        const items = lbuf.map(l => `<li>${inline(l.replace(/^\s*(-|\d+\.)\s*/, ""))}</li>`).join("");
         out.push(ord ? `<ol style="margin-left:20px">${items}</ol>` : `<ul>${items}</ul>`);
-        return;
-      }
-      out.push(`<p>${lines.map(inline).join("<br>")}</p>`);
+        lbuf = [];
+      };
+      lines.forEach(l => {
+        if (/^\s*(-|\d+\.)\s/.test(l)) {
+          flushP();
+          const isOrd = /^\s*\d+\./.test(l);
+          if (lbuf.length && isOrd !== ord) flushL();   // 有序/无序切换时断开
+          ord = isOrd;
+          lbuf.push(l);
+        } else {
+          flushL();
+          pbuf.push(l);
+        }
+      });
+      flushL(); flushP();
     });
   });
   return out.join("");

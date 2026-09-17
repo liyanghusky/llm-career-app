@@ -118,6 +118,18 @@ document.body.addEventListener("click", e => {
     save(); render(true); return;
   }
 
+  // ── Infra 主攻线：分区 / 题库 / 实验室 ──
+  const isec = t.closest("[data-isec]");
+  if (isec) { UI.isec = isec.dataset.isec; render(); return; }
+  const iqc = t.closest("[data-iqcat]");
+  if (iqc) { UI.iqcat = iqc.dataset.iqcat || null; render(true); return; }
+  const iqm = t.closest("[data-iqmode]");
+  if (iqm) { UI.iqmode = iqm.dataset.iqmode || null; render(true); return; }
+  const iqs = t.closest("[data-iqset]");
+  if (iqs) { const [id, m] = iqs.dataset.iqset.split(":"); iqSet(id, +m); render(true); return; }
+  const lbs = t.closest("[data-labset]");
+  if (lbs) { const [id, v] = lbs.dataset.labset.split(":"); labSet(id, +v); render(true); return; }
+
   // ── AI Infra 自评 ──
   const inb = t.closest("[data-inset]");
   if (inb) {
@@ -250,6 +262,14 @@ document.body.addEventListener("keydown", e => {
 
 /* 搜索框（保持焦点） */
 document.body.addEventListener("input", e => {
+  if (e.target.id === "iqkw") {
+    UI.iqkw = e.target.value;
+    const pos = e.target.selectionStart;
+    render(true);
+    const el = document.getElementById("iqkw");
+    if (el) { el.focus(); el.setSelectionRange(pos, pos); }
+    return;
+  }
   if (e.target.id === "kw") {
     UI.kw = e.target.value;
     const pos = e.target.selectionStart;
