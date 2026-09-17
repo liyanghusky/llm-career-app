@@ -493,7 +493,7 @@ pre.aiblk>.aibtn{top:6px; right:6px}
 /* 右侧批注栏 —— 每个问题一张卡，对齐它所属的段落 */
 body{position:relative}
 :root{
-  --rail-w:clamp(430px, 32vw, 580px);   /* 批注栏宽度，随视口伸缩 */
+  --rail-w:clamp(480px, 38vw, 760px);   /* 批注栏默认宽度，可拖动覆盖 */
   --rail-gap:46px;                      /* 离右边缘留白，不贴边 */
 }
 .airail{
@@ -555,6 +555,40 @@ body{position:relative}
   overflow:hidden; margin-bottom:6px}
 .ai-a.clamp *{display:inline}
 .ai-a.clamp pre,.ai-a.clamp ul,.ai-a.clamp ol,.ai-a.clamp blockquote{display:none}
+/* 栏宽拖柄 */
+.airailgrip{
+  position:fixed; top:62px; bottom:0; z-index:35; width:11px; cursor:col-resize;
+  right:calc(var(--rail-w) + var(--rail-gap) - 5px);
+  display:flex; align-items:center; justify-content:center;
+}
+.airailgrip::before{
+  content:""; width:1px; height:100%; background:var(--line);
+  opacity:0; transition:opacity .2s, background .2s;
+}
+.airailgrip::after{
+  content:""; position:absolute; width:3px; height:34px; border-radius:2px;
+  background:var(--line2); opacity:0; transition:opacity .2s, background .2s;
+}
+.airailgrip:hover::before{opacity:1}
+.airailgrip:hover::after{opacity:1; background:var(--ac)}
+body.ai-dragging{user-select:none; cursor:col-resize}
+body.ai-dragging .airailgrip::before{opacity:1; background:var(--ac)}
+body.ai-dragging .airailgrip::after{opacity:1; background:var(--ac)}
+body.ai-dragging-v{user-select:none; cursor:ns-resize}
+
+/* 卡片底部高度拖柄 */
+.aic-grip{
+  height:11px; cursor:ns-resize; position:relative;
+  border-top:1px solid transparent; transition:border-color .2s;
+}
+.aic-grip::after{
+  content:""; position:absolute; left:50%; top:4px; transform:translateX(-50%);
+  width:30px; height:3px; border-radius:2px; background:var(--line);
+  opacity:0; transition:opacity .2s, background .2s;
+}
+.aicard:hover .aic-grip::after{opacity:1}
+.aic-grip:hover::after{background:var(--ac); opacity:1}
+
 .aic-more{font-size:10.5px; color:var(--tx3); letter-spacing:.1em; padding-bottom:6px}
 .aic-body:empty{display:none}
 .ai-u{font-size:13px; color:var(--ac2); margin:0 0 10px; padding-left:11px;

@@ -14,6 +14,16 @@ let AICFG = Object.assign(
   JSON.parse(localStorage.getItem(AICKEY) || "{}")
 );
 function aiSave()    { try { localStorage.setItem(AIKEY, JSON.stringify(AIT)); } catch {} }
+
+/* 布局偏好：栏宽 + 每张卡被拖过的高度 */
+const AILKEY = "llm-career-ai-layout";
+const AIL = Object.assign({ railW: 0, h: {} },
+  JSON.parse(localStorage.getItem(AILKEY) || "{}"));
+function aiLSave() { try { localStorage.setItem(AILKEY, JSON.stringify(AIL)); } catch {} }
+function aiApplyRailW() {
+  if (AIL.railW) document.documentElement.style.setProperty("--rail-w", AIL.railW + "px");
+  else document.documentElement.style.removeProperty("--rail-w");
+}
 function aiCfgSave() { try { localStorage.setItem(AICKEY, JSON.stringify(AICFG)); } catch {} }
 
 /* 服务商预设 —— base 为 OpenAI 兼容端点 */
@@ -248,7 +258,12 @@ function aiBlockText(id) {
 function aiRender() {
   const ids = aiCardIds();
   document.body.classList.toggle("ai-rail-on", ids.length > 0);
-  if (!ids.length) { document.getElementById("airail")?.remove(); return; }
+  if (!ids.length) {
+    document.getElementById("airail")?.remove();
+    const g = document.getElementById("airailgrip"); if (g) g.style.display = "none";
+    document.getElementById("ailines")?.remove();
+    return;
+  }
 
   AI.num = {};
   ids.forEach((id, i) => { AI.num[id] = i + 1; });
@@ -257,6 +272,8 @@ function aiRender() {
   rail.innerHTML = ids.map(id => aiCardHTML(id)).join("");
   rail.querySelectorAll(".aicard").forEach(c => AI_RO.observe(c));
 
+  aiApplyRailW();
+  aiGripEl();
   document.querySelectorAll("[data-aiid]").forEach(el => {
     const id = el.dataset.aiid;
     el.classList.toggle("ai-has", ids.includes(id));
@@ -312,8 +329,14 @@ function aiCardHTML(id) {
     '      <span class="aic-q">' + quote + '</span>\n' +
     '      <button class="ai-x" data-aidel="' + id + '" title="删除这条批注">✕</button>\n' +
     '    </div>\n' +
-    (body ? '    <div class="aic-body" ' + (expanded ? '' : 'data-aitoggle="' + id + '"') + '>' + body + '</div>\n' : '') +
-    foot + '\n  </div>';
+    (body
+      ? '    <div class="aic-body" ' + (expanded ? '' : 'data-aitoggle="' + id + '"') +
+        (expanded && AIL.h[id] ? ' style="height:' + AIL.h[id] + 'px;max-height:none"' : '') +
+        '>' + body + '</div>\n'
+      : '') +
+    foot +
+    (expanded ? '<div class="aic-grip" data-aigrip="' + id + '" title="拖动调整高度，双击还原"></div>' : '') +
+    '\n  </div>';
 }
 
 /* 卡片对齐各自的锚点段落，重叠时顺延 */
@@ -382,6 +405,77 @@ function aiDrawLines(cards) {
   });
   svg.innerHTML = parts.join("");
 }
+
+/* ── 拖拽调整：批注栏宽度 ── */
+function aiGripEl() {
+  let g = document.getElementById("airailgrip");
+  if (!g) {
+    g = document.createElement("div");
+    g.id = "airailgrip"; g.className = "airailgrip";
+    g.title = "左右拖动调整批注栏宽度，双击还原";
+    document.body.appendChild(g);
+    g.addEventListener("mousedown", ev => {
+      ev.preventDefault();
+      document.body.classList.add("ai-dragging");
+      const gap = parseFloat(getComputedStyle(document.documentElement)
+        .getPropertyValue("--rail-gap")) || 46;
+      const move = e => {
+        const w = window.innerWidth - e.clientX - gap;
+        const max = Math.min(900, window.innerWidth - 520);
+        AIL.railW = Math.round(Math.max(360, Math.min(max, w)));
+        aiApplyRailW();
+        aiLayoutSoon();
+      };
+      const up = () => {
+        document.body.classList.remove("ai-dragging");
+        document.removeEventListener("mousemove", move);
+        document.removeEventListener("mouseup", up);
+        aiLSave(); aiLayoutSoon();
+      };
+      document.addEventListener("mousemove", move);
+      document.addEventListener("mouseup", up);
+    });
+    g.addEventListener("dblclick", () => {
+      AIL.railW = 0; aiApplyRailW(); aiLSave(); aiLayoutSoon();
+    });
+  }
+  g.style.display = aiWide() && document.body.classList.contains("ai-rail-on") ? "" : "none";
+  return g;
+}
+
+/* ── 拖拽调整：单张卡片高度 ── */
+document.addEventListener("mousedown", e => {
+  const grip = e.target.closest("[data-aigrip]");
+  if (!grip) return;
+  e.preventDefault();
+  const id = grip.dataset.aigrip;
+  const card = grip.closest(".aicard");
+  const bodyEl = card.querySelector(".aic-body");
+  if (!bodyEl) return;
+  const startY = e.clientY, startH = bodyEl.offsetHeight;
+  document.body.classList.add("ai-dragging-v");
+  const move = ev => {
+    const h = Math.max(80, Math.min(900, startH + (ev.clientY - startY)));
+    AIL.h[id] = Math.round(h);
+    bodyEl.style.height = h + "px";
+    bodyEl.style.maxHeight = "none";
+    aiLayoutSoon();
+  };
+  const up = () => {
+    document.body.classList.remove("ai-dragging-v");
+    document.removeEventListener("mousemove", move);
+    document.removeEventListener("mouseup", up);
+    aiLSave(); aiLayoutSoon();
+  };
+  document.addEventListener("mousemove", move);
+  document.addEventListener("mouseup", up);
+});
+document.addEventListener("dblclick", e => {
+  const grip = e.target.closest("[data-aigrip]");
+  if (!grip) return;
+  delete AIL.h[grip.dataset.aigrip];
+  aiLSave(); aiRender();
+});
 
 /* 悬停卡片时点亮它那条线和对应段落 */
 document.addEventListener("mouseover", e => {
