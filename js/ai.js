@@ -361,20 +361,22 @@ function aiCardHTML(id) {
     '\n  </div>';
 }
 
-/* 卡片对齐各自的锚点段落，重叠时顺延 */
+/* 卡片对齐各自的锚点段落。卡片放不下时，在正文里插入留白把后面的段落推下去，
+   让每张卡都能正对自己那一段。 */
+const AI_GAP = 14;
+let aiLaying = false;
+
 function aiLayout() {
+  if (aiLaying) return;
   const rail = document.getElementById("airail");
   if (!rail) return;
+  aiLaying = true;
+  try { aiLayoutInner(rail); } finally { aiLaying = false; }
+}
+
+function aiLayoutInner(rail) {
   const cards = [...rail.querySelectorAll(".aicard")];   // 只排锚定的
-  if (!aiWide()) {
-    rail.classList.add("narrow");
-    rail.style.height = "";
-    cards.forEach(c => { c.style.top = ""; });
-    return;
-  }
-  rail.classList.remove("narrow");
-  const railTop = rail.getBoundingClientRect().top + window.scrollY;
-  let prev = 0;
+
   // 浮窗：绝对定位在文档坐标上，跟着页面一起滚
   document.querySelectorAll("#aifloat .aicard").forEach(c => {
     const fl = AIL.float[c.dataset.card];
@@ -384,22 +386,65 @@ function aiLayout() {
     c.style.width = Math.round(fl.w) + "px";
   });
 
+  if (!aiWide()) {
+    rail.classList.add("narrow");
+    rail.style.height = "";
+    cards.forEach(c => { c.style.top = ""; });
+    document.querySelectorAll(".aispacer").forEach(n => n.remove());
+    aiDrawLines([]);
+    return;
+  }
+  rail.classList.remove("narrow");
+
+  // 先撤掉上一轮的留白，回到正文的自然排版
+  document.querySelectorAll(".aispacer").forEach(n => n.remove());
+
+  const railTop0 = rail.getBoundingClientRect().top + window.scrollY;
+  const items = [];
   cards.forEach(c => {
-    const id = c.dataset.card;
-    c.style.left = ""; c.style.width = "";
-    const anchor = document.querySelector('[data-aiid="' + id + '"]');
-    if (!anchor) { c.style.display = "none"; return; }
+    const a = document.querySelector('[data-aiid="' + c.dataset.card + '"]');
+    if (!a) { c.style.display = "none"; return; }
     c.style.display = "";
-    const aTop = anchor.getBoundingClientRect().top + window.scrollY - railTop;
+    items.push({ c, a, top0: a.getBoundingClientRect().top + window.scrollY - railTop0 });
+  });
+
+  // 第一遍：算出每一段需要往下推多少
+  let shift = 0, prevBottom = 0;
+  const inserts = [];
+  items.forEach(({ c, a, top0 }) => {
+    const aTop = top0 + shift;
+    const want = Math.max(aTop, prevBottom);
+    const delta = Math.round(want - aTop);
+    if (delta > 2) { inserts.push([a, delta]); shift += delta; }
+    prevBottom = want + c.offsetHeight + AI_GAP;
+  });
+
+  // 插入留白（独立的空 div，避免和相邻 margin 合并导致高度算不准）
+  inserts.forEach(([a, d]) => {
+    const sp = document.createElement("div");
+    sp.className = "aispacer";
+    sp.style.height = d + "px";
+    a.parentNode.insertBefore(sp, a);
+  });
+
+  // 第二遍：段落已经让开了，卡片直接贴着各自的锚点放
+  const railTop = rail.getBoundingClientRect().top + window.scrollY;
+  let prev = 0;
+  items.forEach(({ c, a }) => {
+    const aTop = a.getBoundingClientRect().top + window.scrollY - railTop;
     const top = Math.max(aTop, prev);
+    c.style.left = ""; c.style.width = "";
     c.style.top = top + "px";
-    prev = top + c.offsetHeight + 14;
+    prev = top + c.offsetHeight + AI_GAP;
   });
   rail.style.height = (prev + 60) + "px";
+
   aiDrawLines([...cards, ...document.querySelectorAll("#aifloat .aicard")]);
 }
 
-/* 从段落右缘牵一条曲线到对应卡片，并在段落侧点一个带编号的锚点 */
+window.addEventListener("resize", aiLayoutSoon);
+
+/* ── 连线：从段落右缘牵一条曲线到对应卡片 ── */
 function aiLinesEl() {
   let g = document.getElementById("ailines");
   if (!g) {
@@ -412,12 +457,11 @@ function aiLinesEl() {
 
 function aiDrawLines(cards) {
   const svg = aiLinesEl();
-  if (!aiWide()) { svg.innerHTML = ""; svg.style.display = "none"; return; }
+  if (!aiWide() || !cards.length) { svg.innerHTML = ""; svg.style.display = "none"; return; }
   svg.style.display = "";
   svg.setAttribute("width", document.documentElement.scrollWidth);
   svg.setAttribute("height", document.documentElement.scrollHeight);
 
-  const NS = "http://www.w3.org/2000/svg";
   const parts = [];
   cards.forEach(c => {
     const id = c.dataset.card;
@@ -454,8 +498,8 @@ function aiGripEl() {
         .getPropertyValue("--rail-gap")) || 46;
       const move = e => {
         const w = window.innerWidth - e.clientX - gap;
-        const max = Math.min(900, window.innerWidth - 520);
-        AIL.railW = Math.round(Math.max(360, Math.min(max, w)));
+        const max = Math.min(1200, window.innerWidth - 380);
+        AIL.railW = Math.round(Math.max(320, Math.min(max, w)));
         aiApplyRailW();
         aiLayoutSoon();
       };
@@ -528,11 +572,11 @@ document.addEventListener("mousedown", e => {
   const w0 = card.offsetWidth, h0 = bodyEl ? bodyEl.offsetHeight : 0;
   document.body.classList.add("ai-dragging-corner");
   const move = ev => {
-    const w = Math.max(300, Math.min(900, w0 + ev.clientX - sx));
+    const w = Math.max(260, Math.min(1200, w0 + ev.clientX - sx));
     AIL.float[id].w = Math.round(w);
     card.style.width = AIL.float[id].w + "px";
     if (bodyEl) {
-      const h = Math.max(80, Math.min(900, h0 + ev.clientY - sy));
+      const h = Math.max(80, Math.min(2000, h0 + ev.clientY - sy));
       AIL.h[id] = Math.round(h);
       bodyEl.style.height = h + "px";
       bodyEl.style.maxHeight = "none";
@@ -561,7 +605,7 @@ document.addEventListener("mousedown", e => {
   const startY = e.clientY, startH = bodyEl.offsetHeight;
   document.body.classList.add("ai-dragging-v");
   const move = ev => {
-    const h = Math.max(80, Math.min(900, startH + (ev.clientY - startY)));
+    const h = Math.max(80, Math.min(2000, startH + (ev.clientY - startY)));
     AIL.h[id] = Math.round(h);
     bodyEl.style.height = h + "px";
     bodyEl.style.maxHeight = "none";
@@ -592,7 +636,6 @@ document.addEventListener("mouseover", e => {
   document.querySelectorAll("[data-aiid]").forEach(n =>
     n.classList.toggle("ai-hover", !!id && n.dataset.aiid === id));
 });
-window.addEventListener("resize", aiLayoutSoon);
 
 function aiOpen(id) {
   AIT[id] = AIT[id] || { turns: [] };

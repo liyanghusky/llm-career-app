@@ -14,7 +14,8 @@
   --serif:Cambria,Georgia,"Noto Serif SC","Source Han Serif SC","Source Han Serif CN",
           "Noto Serif CJK SC","Songti SC","STSong",SimSun,serif;
   --mono:"JetBrains Mono","SF Mono",Consolas,"Cascadia Code",monospace;
-  --r:3px;
+  --r:9px;
+  --r-lg:14px;   /* 卡片、弹窗一类大块 */
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -36,7 +37,7 @@ body{
 a{color:var(--ac); text-decoration:none; border-bottom:1px solid rgba(156,107,79,.35)}
 a:hover{border-bottom-color:var(--ac)}
 code{font-family:var(--mono); font-size:.85em; background:rgba(120,110,90,.09);
-  color:#5c4a3a; padding:1px 6px; border-radius:2px}
+  color:#5c4a3a; padding:1.5px 7px; border-radius:5px}
 pre{background:#efe9dc; border:1px solid var(--line); border-radius:var(--r);
   padding:15px 17px; overflow-x:auto; margin:13px 0; line-height:1.65}
 pre code{background:none; padding:0; color:#3f3a31; font-size:13.5px}
@@ -88,7 +89,7 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .tiny{font-size:13.5px}
 .mono{font-family:var(--mono)}
 .callout{margin:12px 0; padding:12px 16px; background:rgba(59,74,90,.05);
-  border-left:2px solid var(--ac2); font-weight:300}
+  border-left:2px solid var(--ac2); font-weight:300; border-radius:0 var(--r) var(--r) 0}
 .callout.warm{background:rgba(156,107,79,.06); border-left-color:var(--ac)}
 .callout b{color:var(--tx)}
 
@@ -138,8 +139,8 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
   font-weight:300; margin:30px 0 14px; padding-bottom:7px; border-bottom:1px solid var(--line)}
 
 .next{display:flex; flex-direction:column}
-.nx{display:flex; gap:16px; align-items:flex-start; padding:14px 4px;
-  border-bottom:1px solid var(--line); cursor:pointer; transition:.3s}
+.nx{display:flex; gap:16px; align-items:flex-start; padding:14px 12px;
+  border-bottom:1px solid var(--line); cursor:pointer; transition:.3s; border-radius:var(--r)}
 .nx:hover{background:rgba(156,107,79,.045); padding-left:10px}
 .nx .ix{font-size:11px; color:var(--ac); padding-top:4px; min-width:16px; letter-spacing:.1em}
 .nx b{font-size:15px; color:var(--tx); font-weight:400; display:block; line-height:1.6}
@@ -157,8 +158,8 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 /* ───── roadmap ───── */
 .stage{margin-bottom:0; border-bottom:1px solid var(--line)}
 .stage:first-of-type{border-top:1px solid var(--line)}
-.stage-h{display:flex; align-items:center; gap:16px; padding:19px 4px; cursor:pointer;
-  transition:.3s; user-select:none}
+.stage-h{display:flex; align-items:center; gap:16px; padding:19px 12px; cursor:pointer;
+  transition:.3s; user-select:none; border-radius:var(--r)}
 .stage-h:hover{background:rgba(156,107,79,.04)}
 .stage-dot{width:7px; height:7px; border-radius:50%; flex:none}
 .stage-h .t{flex:1; min-width:0}
@@ -171,7 +172,8 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .stage-b{display:none; padding:2px 0 14px}
 .stage.open .stage-b{display:block}
 .stage-note{padding:11px 16px; font-size:12.5px; color:var(--wr); font-weight:300;
-  background:rgba(176,132,66,.06); border-left:2px solid var(--wr); margin:4px 0 12px}
+  background:rgba(176,132,66,.06); border-left:2px solid var(--wr); margin:4px 0 12px;
+  border-radius:0 var(--r) var(--r) 0}
 
 .node{padding:13px 4px 13px 2px; border-top:1px solid rgba(216,209,193,.6)}
 .node-h{display:flex; gap:14px; align-items:flex-start}
@@ -247,7 +249,8 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .q{border-bottom:1px solid var(--line); transition:.3s}
 .q:first-of-type{border-top:1px solid var(--line)}
 .q.open{background:rgba(247,244,237,.7)}
-.q-h{display:flex; gap:14px; align-items:flex-start; padding:15px 4px; cursor:pointer}
+.q-h{display:flex; gap:14px; align-items:flex-start; padding:15px 12px; cursor:pointer;
+  border-radius:var(--r)}
 .q-h:hover{background:rgba(156,107,79,.035)}
 .mstate{width:6px; height:6px; border-radius:50%; flex:none; margin-top:11px;
   border:1px solid var(--line2); background:none}
@@ -281,7 +284,7 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .dstat{display:flex; gap:26px; justify-content:center; font-size:11px;
   color:var(--tx3); margin-bottom:26px; font-weight:300; letter-spacing:.16em}
 .dstat b{color:var(--ac); font-weight:400}
-.dcard{background:var(--panel); border:1px solid var(--line); padding:44px 42px;
+.dcard{background:var(--panel); border:1px solid var(--line); border-radius:var(--r-lg); padding:44px 42px;
   min-height:290px; display:flex; flex-direction:column; position:relative}
 .dcard::before{content:""; position:absolute; left:20px; top:20px; width:46px; height:46px;
   border:1.4px solid var(--ac); border-radius:50%; border-right-color:transparent;
@@ -307,7 +310,7 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .modal-wrap{position:fixed; inset:0; z-index:90; background:rgba(35,33,28,.42);
   backdrop-filter:blur(3px); display:grid; place-items:center; padding:24px; overflow-y:auto}
 .modal-wrap[hidden]{display:none}
-.modal{background:var(--washi); border:1px solid var(--line2); max-width:760px;
+.modal{background:var(--washi); border:1px solid var(--line2); border-radius:var(--r-lg); max-width:760px;
   width:100%; padding:38px 42px; position:relative; max-height:88vh; overflow-y:auto;
   box-shadow:0 20px 60px rgba(35,33,28,.18)}
 .modal-x{position:absolute; right:18px; top:16px; background:none; border:0; color:var(--tx3);
@@ -327,19 +330,21 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .step.done b{color:var(--tx3)}
 .step.done p{color:var(--tx3)}
 .rbox{background:rgba(107,125,92,.07); border-left:2px solid var(--ok);
-  padding:15px 18px; font-size:14.5px; color:var(--tx); line-height:1.9; font-weight:300}
+  padding:15px 18px; font-size:14.5px; color:var(--tx); line-height:1.9; font-weight:300;
+  border-radius:0 var(--r) var(--r) 0}
 .asks li{font-size:14.5px; color:var(--tx2); margin-bottom:7px; margin-left:18px; font-weight:300}
 .pitfall{background:rgba(168,80,63,.06); border-left:2px solid var(--bad);
-  padding:15px 18px; font-size:14.5px; color:var(--tx2); margin-top:16px; font-weight:300}
+  padding:15px 18px; font-size:14.5px; color:var(--tx2); margin-top:16px; font-weight:300;
+  border-radius:0 var(--r) var(--r) 0}
 
 /* ───── markdown 扩展 ───── */
 .lh3{font-size:16px; color:var(--tx); margin:18px 0 9px; font-weight:500; letter-spacing:.03em}
 blockquote{border-left:2px solid var(--ac); background:rgba(156,107,79,.055);
-  padding:13px 18px; margin:15px 0}
+  padding:13px 18px; margin:15px 0; border-radius:0 var(--r) var(--r) 0}
 blockquote p:last-child{margin-bottom:0}
 .formula{font-family:var(--mono); font-size:15px; color:#4a4034; text-align:center;
-  background:rgba(120,110,90,.06); border-top:1px solid var(--line);
-  border-bottom:1px solid var(--line); padding:16px 18px; margin:16px 0; overflow-x:auto}
+  background:rgba(120,110,90,.06); border:1px solid var(--line); border-radius:var(--r);
+  padding:16px 18px; margin:16px 0; overflow-x:auto}
 
 /* ───── 课程 ───── */
 .lesson{max-width:740px; margin:0 auto}
@@ -389,13 +394,13 @@ blockquote p:last-child{margin-bottom:0}
   padding:7px 2px; color:var(--tx); font:inherit; font-family:var(--mono); font-size:16px;
   width:220px; outline:none; transition:border-color .4s}
 .qinput:focus{border-bottom-color:var(--ac)}
-.qta{background:rgba(255,255,255,.4); border:1px solid var(--line); padding:13px 15px;
+.qta{background:rgba(255,255,255,.4); border:1px solid var(--line); border-radius:var(--r); padding:13px 15px;
   color:var(--tx); font:inherit; font-size:15px; width:100%; min-height:92px; outline:none;
   resize:vertical; line-height:1.9; font-weight:300; transition:border-color .4s}
 .qta:focus{border-color:var(--ac)}
 .choices{display:flex; flex-direction:column; gap:0; border-top:1px solid var(--line)}
-.ch{display:flex; gap:11px; align-items:flex-start; padding:11px 4px;
-  border-bottom:1px solid var(--line); cursor:pointer; font-size:15px;
+.ch{display:flex; gap:11px; align-items:flex-start; padding:11px 12px;
+  border-bottom:1px solid var(--line); cursor:pointer; font-size:15px; border-radius:var(--r);
   color:var(--tx2); transition:.25s; line-height:1.75; font-weight:300}
 .ch:hover{background:rgba(156,107,79,.045); color:var(--tx)}
 .ch.sel{color:var(--tx); background:rgba(59,74,90,.06)}
@@ -408,14 +413,16 @@ blockquote p:last-child{margin-bottom:0}
 .qz-msg.ok{color:var(--ok)}
 .qz-msg.bad{color:var(--bad)}
 .qz-hint{margin-top:16px; padding:13px 17px; background:rgba(176,132,66,.07);
-  border-left:2px solid var(--wr); font-size:14.5px; line-height:1.9; font-weight:300}
+  border-left:2px solid var(--wr); font-size:14.5px; line-height:1.9; font-weight:300;
+  border-radius:0 var(--r) var(--r) 0}
 .qz-hint b,.qz-why b{display:block; font-size:10px; letter-spacing:.24em;
   text-transform:uppercase; margin-bottom:7px; font-weight:400}
 .qz-hint b{color:var(--wr)}
 .qz-why b{color:var(--ok)}
 .qz-hint p:last-child,.qz-why p:last-child{margin-bottom:0}
 .qz-why{margin-top:16px; padding:16px 18px; background:rgba(107,125,92,.06);
-  border-left:2px solid var(--ok); font-size:14.5px; line-height:1.95; font-weight:300}
+  border-left:2px solid var(--ok); font-size:14.5px; line-height:1.95; font-weight:300;
+  border-radius:0 var(--r) var(--r) 0}
 
 .lfoot{margin-top:40px; padding-top:26px; border-top:1px solid var(--line)}
 .lfoot-ok{color:var(--ok); font-size:14px; margin-bottom:18px; display:flex;
@@ -424,7 +431,7 @@ blockquote p:last-child{margin-bottom:0}
 
 /* ───── LeetCode ───── */
 .revbox{background:rgba(109,99,132,.07); border-left:2px solid var(--pu);
-  padding:15px 18px; margin-bottom:20px}
+  padding:15px 18px; margin-bottom:20px; border-radius:0 var(--r) var(--r) 0}
 .revbox b{font-size:13px; color:var(--pu); display:block; margin-bottom:10px; font-weight:400}
 .revbox div{display:flex; gap:7px; flex-wrap:wrap}
 .revbox .chip{cursor:pointer; transition:.25s}
@@ -440,7 +447,8 @@ blockquote p:last-child{margin-bottom:0}
 .lc-pattern ul{margin:0 0 10px 20px}
 
 .lcp{border-top:1px solid rgba(216,209,193,.6)}
-.lcp-h{display:flex; gap:13px; align-items:center; padding:12px 4px; cursor:pointer; transition:.3s}
+.lcp-h{display:flex; gap:13px; align-items:center; padding:12px 12px; cursor:pointer;
+  transition:.3s; border-radius:var(--r)}
 .lcp-h:hover{background:rgba(156,107,79,.04)}
 .lcdot{width:6px; height:6px; border-radius:50%; border:1px solid var(--line2); flex:none}
 .lcp.s1 .lcdot{background:var(--wr); border-color:var(--wr)}
@@ -458,11 +466,13 @@ blockquote p:last-child{margin-bottom:0}
   text-transform:uppercase; margin-bottom:5px; font-weight:400}
 .hintbox{display:flex; flex-direction:column; gap:9px; align-items:flex-start; margin:14px 0}
 .hint-on{background:rgba(176,132,66,.07); border-left:2px solid var(--wr); padding:11px 16px;
-  font-size:14.5px; color:var(--tx2); line-height:1.9; width:100%; font-weight:300}
+  font-size:14.5px; color:var(--tx2); line-height:1.9; width:100%; font-weight:300;
+  border-radius:0 var(--r) var(--r) 0}
 .hint-on b{display:block; font-size:10px; letter-spacing:.2em; color:var(--wr);
   margin-bottom:5px; font-weight:400}
 .keybox{background:rgba(107,125,92,.06); border-left:2px solid var(--ok);
-  padding:15px 18px; font-size:14.5px; line-height:1.95; margin:14px 0; font-weight:300}
+  padding:15px 18px; font-size:14.5px; line-height:1.95; margin:14px 0; font-weight:300;
+  border-radius:0 var(--r) var(--r) 0}
 .keybox>b{display:block; font-size:10px; letter-spacing:.2em; color:var(--ok);
   text-transform:uppercase; margin-bottom:7px; font-weight:400}
 .keybox p:last-of-type{margin-bottom:0}
@@ -509,11 +519,11 @@ body{position:relative}
 
 .aicard{
   position:absolute; right:0; width:100%;
-  background:var(--washi); border:1px solid var(--line); border-radius:var(--r);
-  box-shadow:0 2px 14px rgba(35,33,28,.06);
+  background:var(--washi); border:1px solid var(--line); border-radius:var(--r-lg);
+  box-shadow:0 2px 16px rgba(35,33,28,.055);
   transition:top .28s cubic-bezier(.4,0,.2,1), border-color .25s, box-shadow .25s;
 }
-.aicard.active{border-color:var(--ac); box-shadow:0 4px 20px rgba(156,107,79,.16)}
+.aicard.active{border-color:var(--ac); box-shadow:0 6px 24px rgba(156,107,79,.14)}
 
 .ailines{position:absolute; top:0; left:0; z-index:29; pointer-events:none; overflow:visible}
 .ailine{fill:none; stroke:var(--line2); stroke-width:1; opacity:.75; transition:stroke .2s, opacity .2s, stroke-width .2s}
@@ -534,15 +544,16 @@ body{position:relative}
 .aic-head{
   display:flex; align-items:flex-start; gap:9px; padding:11px 15px 10px;
   border-bottom:1px solid var(--line); cursor:grab; background:rgba(120,110,90,.05);
-  border-radius:var(--r) var(--r) 0 0; user-select:none;
+  border-radius:var(--r-lg) var(--r-lg) 0 0; user-select:none;
 }
 .aic-head:active{cursor:grabbing}
 
 /* 拖出来的浮窗：停在文档坐标上，跟着页面一起滚 */
+.aispacer{flex:none; pointer-events:none}
 .aifloat{position:absolute; top:0; left:0; width:0; height:0; z-index:32}
 .aicard.floating{
   position:absolute; right:auto; z-index:32;
-  box-shadow:0 14px 40px rgba(35,33,28,.20); border-color:var(--line2);
+  box-shadow:0 16px 44px rgba(35,33,28,.16); border-color:var(--line2);
 }
 .aicard.floating .aic-head{background:rgba(156,107,79,.10)}
 .aicard.nodrag-anim{transition:none !important}
@@ -614,8 +625,9 @@ body.ai-dragging-v{user-select:none; cursor:ns-resize}
 
 .aic-more{font-size:10.5px; color:var(--tx3); letter-spacing:.1em; padding-bottom:6px}
 .aic-body:empty{display:none}
-.ai-u{font-size:14px; color:var(--ac2); margin:0 0 10px; padding-left:11px;
-  border-left:2px solid rgba(59,74,90,.3); font-weight:300; line-height:1.7}
+.ai-u{font-size:14px; color:var(--ac2); margin:0 0 10px; padding:2px 0 2px 11px;
+  border-left:2px solid rgba(59,74,90,.3); font-weight:300; line-height:1.7;
+  background:rgba(59,74,90,.035); border-radius:0 var(--r) var(--r) 0}
 .ai-u p{margin:0}
 .ai-a{font-size:15px; line-height:1.95; color:var(--tx); margin:0 0 13px; font-weight:300}
 .ai-a p{margin-bottom:9px}
@@ -637,7 +649,7 @@ body.ai-dragging-v{user-select:none; cursor:ns-resize}
 .ai-ta:focus{border-bottom-color:var(--ac)}
 
 /* 正文里的锚点标记 */
-.ai-has{background:rgba(156,107,79,.045); box-shadow:inset -2px 0 0 var(--line2)}
+.ai-has{background:rgba(156,107,79,.045); box-shadow:inset -2px 0 0 var(--line2); border-radius:var(--r)}
 .ai-active{background:rgba(156,107,79,.10); box-shadow:inset -2px 0 0 var(--ac)}
 .ai-hover{background:rgba(156,107,79,.13); box-shadow:inset -2px 0 0 var(--ac)}
 .ai-has>.aibtn{opacity:.6; color:var(--ac2); border-color:var(--ac2)}
