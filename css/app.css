@@ -490,34 +490,80 @@ pre.aiblk>.aibtn{top:6px; right:6px}
   .aibtn::before{content:"✦"; font-size:9px; line-height:1}
 }
 
-.aipanel{margin:14px 0 18px; border:1px solid var(--line2); background:rgba(255,255,255,.42)}
-.ai-head{display:flex; align-items:center; gap:10px; padding:10px 15px;
-  border-bottom:1px solid var(--line); background:rgba(120,110,90,.05)}
-.ai-tag{font-size:10px; letter-spacing:.3em; color:var(--ac); font-weight:400}
+/* 右侧詳解面板 */
+.aiside{
+  position:fixed; top:0; right:0; bottom:0; width:min(430px,94vw); z-index:60;
+  background:var(--washi); border-left:1px solid var(--line2);
+  display:flex; flex-direction:column;
+  transform:translateX(103%); transition:transform .34s cubic-bezier(.4,0,.2,1);
+  box-shadow:-14px 0 40px rgba(35,33,28,.10);
+  background-image:radial-gradient(rgba(120,110,90,.05) 1px,transparent 1px);
+  background-size:5px 5px;
+}
+.aiside.on{transform:none}
+.aiside:empty{display:none}
+/* 宽屏时把正文让开，不遮挡 */
+@media(min-width:1180px){
+  body.ai-side-open{padding-right:430px}
+  body.ai-side-open .topbar{padding-right:24px}
+}
+
+.ai-head{display:flex; align-items:center; gap:10px; padding:0 16px; height:62px; flex:none;
+  border-bottom:1px solid var(--line); background:rgba(235,229,216,.6)}
+.ai-tag{font-size:11px; letter-spacing:.34em; color:var(--ac); font-weight:400}
 .ai-x{margin-left:auto; background:none; border:0; color:var(--tx3); cursor:pointer;
-  font:inherit; font-size:11.5px; padding:2px 6px; font-weight:300}
+  font:inherit; font-size:12px; padding:4px 7px; font-weight:300; transition:color .25s}
 .ai-x+.ai-x{margin-left:0}
 .ai-x:hover{color:var(--ac)}
-.ai-body{padding:6px 16px}
-.ai-body:empty{display:none}
-.ai-u{font-size:13px; color:var(--ac2); margin:13px 0 8px; padding-left:12px;
+
+.ai-quote{
+  flex:none; padding:12px 18px; font-size:12.5px; line-height:1.75; color:var(--tx2);
+  font-weight:300; border-bottom:1px solid var(--line); cursor:pointer;
+  background:rgba(120,110,90,.045); max-height:96px; overflow:hidden; position:relative;
+  transition:color .25s;
+}
+.ai-quote::before{content:"「"; color:var(--line2); margin-right:2px}
+.ai-quote::after{content:"」"; color:var(--line2)}
+.ai-quote:hover{color:var(--tx)}
+
+.ai-body{flex:1; min-height:0; overflow-y:auto; padding:16px 18px}
+.ai-empty{color:var(--tx3); font-size:13px; line-height:1.9; font-weight:300; padding:8px 0 4px}
+.ai-u{font-size:13px; color:var(--ac2); margin:0 0 10px; padding-left:12px;
   border-left:2px solid rgba(59,74,90,.3); font-weight:300}
 .ai-u p{margin:0}
-.ai-a{font-size:14px; line-height:1.95; color:var(--tx); margin:0 0 14px; font-weight:300}
+.ai-a{font-size:14px; line-height:1.95; color:var(--tx); margin:0 0 18px; font-weight:300}
 .ai-a p{margin-bottom:10px}
 .ai-a ul,.ai-a ol{margin:0 0 10px 19px}
 .ai-a li{margin-bottom:5px}
 .ai-a pre,.ai-a blockquote{margin:10px 0}
+.ai-a pre{font-size:12px}
 .ai-think{color:var(--tx3); font-size:13px}
 .ai-think::after{content:""; animation:aidot 1.5s steps(4,end) infinite}
 @keyframes aidot{0%{content:""}25%{content:"·"}50%{content:"··"}75%{content:"···"}}
-.ai-presets{display:flex; gap:7px; flex-wrap:wrap; padding:4px 15px 12px}
-.ai-presets .fbtn{font-size:11.5px; padding:3px 11px}
-.ai-ctl{display:flex; gap:14px; align-items:flex-end; padding:0 15px 14px}
-.ai-ta{flex:1; background:none; border:0; border-bottom:1px solid var(--line);
+
+.ai-foot{flex:none; border-top:1px solid var(--line); background:rgba(235,229,216,.45)}
+.ai-presets{display:flex; gap:6px; flex-wrap:wrap; padding:11px 16px 0}
+.ai-presets .fbtn{font-size:11.5px; padding:3px 10px}
+.ai-ctl{display:flex; gap:12px; align-items:flex-end; padding:11px 16px 14px}
+.ai-ta{flex:1; background:none; border:0; border-bottom:1px solid var(--line2);
   padding:6px 2px; color:var(--tx); font:inherit; font-size:13.5px; outline:none;
-  resize:none; line-height:1.7; max-height:160px; font-weight:300; transition:border-color .4s}
+  resize:none; line-height:1.7; max-height:140px; font-weight:300; transition:border-color .4s}
 .ai-ta:focus{border-bottom-color:var(--ac)}
+
+/* 正在提问的那一段高亮；问过的段落留个标记 */
+.ai-active{background:rgba(156,107,79,.07); box-shadow:-10px 0 0 rgba(156,107,79,.07),
+  10px 0 0 rgba(156,107,79,.07)}
+.ai-has>.aibtn{opacity:.55; color:var(--ac2); border-color:var(--ac2)}
+.aiblk.ai-active>.aibtn{opacity:1; background:var(--ac); color:var(--washi); border-color:var(--ac)}
+
+/* 窄屏改成底部抽屉 */
+@media(max-width:760px){
+  .aiside{top:auto; left:0; right:0; width:auto; height:80vh;
+    border-left:0; border-top:1px solid var(--line2); border-radius:10px 10px 0 0;
+    transform:translateY(103%); box-shadow:0 -14px 40px rgba(35,33,28,.16)}
+  .aiside.on{transform:none}
+  .ai-head{height:52px}
+}
 
 .aicfg{display:flex; flex-direction:column; gap:7px}
 .aicfg label{font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:var(--tx3);
