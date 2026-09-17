@@ -508,7 +508,7 @@ body{position:relative}
 }
 .airail{
   position:absolute; top:0; right:var(--rail-gap); width:var(--rail-w);
-  z-index:30; pointer-events:none;
+  z-index:auto; pointer-events:none;
 }
 .airail .aicard{pointer-events:auto}
 /* 够宽才留出批注栏的位置，否则卡片改成贴底抽屉 */
@@ -518,14 +518,15 @@ body{position:relative}
 }
 
 .aicard{
-  position:absolute; right:0; width:100%;
+  position:absolute; right:0; width:100%; z-index:30;
   background:var(--washi); border:1px solid var(--line); border-radius:var(--r-lg);
   box-shadow:0 2px 16px rgba(35,33,28,.055);
   transition:top .28s cubic-bezier(.4,0,.2,1), border-color .25s, box-shadow .25s;
 }
 .aicard.active{border-color:var(--ac); box-shadow:0 6px 24px rgba(156,107,79,.14)}
+.aicard.floating:hover{box-shadow:0 18px 50px rgba(35,33,28,.22)}
 
-.ailines{position:absolute; top:0; left:0; z-index:29; pointer-events:none; overflow:visible}
+.ailines{position:absolute; top:0; left:0; z-index:20; pointer-events:none; overflow:visible}
 .ailine{fill:none; stroke:var(--line2); stroke-width:1; opacity:.75; transition:stroke .2s, opacity .2s, stroke-width .2s}
 .aidot{fill:var(--washi); stroke:var(--line2); stroke-width:1.4; transition:stroke .2s, fill .2s}
 .ainum{font-family:var(--serif); font-size:10px; fill:var(--tx3); transition:fill .2s}
@@ -550,9 +551,9 @@ body{position:relative}
 
 /* 拖出来的浮窗：停在文档坐标上，跟着页面一起滚 */
 .aispacer{flex:none; pointer-events:none}
-.aifloat{position:absolute; top:0; left:0; width:0; height:0; z-index:32}
+.aifloat{position:absolute; top:0; left:0; width:0; height:0; z-index:auto}
 .aicard.floating{
-  position:absolute; right:auto; z-index:32;
+  position:absolute; right:auto; z-index:31;
   box-shadow:0 16px 44px rgba(35,33,28,.16); border-color:var(--line2);
 }
 .aicard.floating .aic-head{background:rgba(156,107,79,.10)}
@@ -591,7 +592,7 @@ body.ai-dragging-corner{user-select:none; cursor:nwse-resize}
 .ai-a.clamp pre,.ai-a.clamp ul,.ai-a.clamp ol,.ai-a.clamp blockquote{display:none}
 /* 栏宽拖柄 */
 .airailgrip{
-  position:fixed; top:62px; bottom:0; z-index:35; width:11px; cursor:col-resize;
+  position:fixed; top:62px; bottom:0; z-index:100; width:11px; cursor:col-resize;
   right:calc(var(--rail-w) + var(--rail-gap) - 5px);
   display:flex; align-items:center; justify-content:center;
 }

@@ -17,9 +17,11 @@ function aiSave()    { try { localStorage.setItem(AIKEY, JSON.stringify(AIT)); }
 
 /* 布局偏好：栏宽 + 每张卡被拖过的高度 */
 const AILKEY = "llm-career-ai-layout";
-const AIL = Object.assign({ railW: 0, h: {}, float: {} },
+const AIL = Object.assign({ railW: 0, h: {}, float: {}, z: {}, zTop: 0 },
   JSON.parse(localStorage.getItem(AILKEY) || "{}"));
 if (!AIL.float) AIL.float = {};
+if (!AIL.z) AIL.z = {};
+if (!AIL.zTop) AIL.zTop = 0;
 function aiLSave() { try { localStorage.setItem(AILKEY, JSON.stringify(AIL)); } catch {} }
 function aiApplyRailW() {
   if (AIL.railW) document.documentElement.style.setProperty("--rail-w", AIL.railW + "px");
@@ -189,6 +191,27 @@ function aiCtx(el) {
 }
 
 function aiWide() { return window.innerWidth >= 1280; }
+
+/* 把某张卡提到最前。卡片之间可能互相遮挡（浮窗压住浮窗，或浮窗压住锚定卡），
+   点哪张哪张浮上来。 */
+function aiApplyZ() {
+  document.querySelectorAll(".aicard").forEach(c => {
+    const n = AIL.z[c.dataset.card];
+    c.style.zIndex = n ? String(40 + n) : "";
+  });
+}
+function aiBringFront(id) {
+  if (AIL.z[id] === AIL.zTop && AIL.zTop > 0) return;   // 已经在最前
+  AIL.zTop = (AIL.zTop || 0) + 1;
+  AIL.z[id] = AIL.zTop;
+  aiApplyZ();
+  aiLSave();
+}
+/* 捕获阶段先跑，保证拖拽/点击之前就已经浮到前面 */
+document.addEventListener("mousedown", e => {
+  const card = e.target.closest?.(".aicard");
+  if (card) aiBringFront(card.dataset.card);
+}, true);
 
 function aiDecorate() {
   document.body.classList.toggle("ai-on", aiOn());
@@ -391,6 +414,7 @@ function aiLayoutInner(rail) {
     rail.style.height = "";
     cards.forEach(c => { c.style.top = ""; });
     document.querySelectorAll(".aispacer").forEach(n => n.remove());
+    aiApplyZ();
     aiDrawLines([]);
     return;
   }
@@ -439,6 +463,7 @@ function aiLayoutInner(rail) {
   });
   rail.style.height = (prev + 60) + "px";
 
+  aiApplyZ();
   aiDrawLines([...cards, ...document.querySelectorAll("#aifloat .aicard")]);
 }
 
@@ -640,6 +665,7 @@ document.addEventListener("mouseover", e => {
 function aiOpen(id) {
   AIT[id] = AIT[id] || { turns: [] };
   AI.active = id;
+  aiBringFront(id);
   aiSave(); aiRender();
   setTimeout(() => {
     const card = document.querySelector('.aicard[data-card="' + id + '"]');
@@ -650,7 +676,7 @@ function aiOpen(id) {
 
 function aiRemove(id) {
   delete AIT[id];
-  delete AIL.float[id]; delete AIL.h[id]; aiLSave();
+  delete AIL.float[id]; delete AIL.h[id]; delete AIL.z[id]; aiLSave();
   if (AI.active === id) AI.active = null;
   aiSave(); aiRender();
 }
