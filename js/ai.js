@@ -7,7 +7,7 @@
 const AIKEY  = "llm-career-ai-v1";
 const AICKEY = "llm-career-ai-cfg";
 
-const AI = { sample: null, runtime: false, ctl: {}, active: null, open: new Set() };
+const AI = { sample: null, runtime: false, ctl: {}, active: null, open: new Set(), num: {} };
 const AIT = JSON.parse(localStorage.getItem(AIKEY) || "{}");     // aiid -> {turns, open}
 let AICFG = Object.assign(
   { mode: "off", key: "", base: "", model: "" },
@@ -177,7 +177,7 @@ function aiCtx(el) {
   return parts.join("\n");
 }
 
-function aiWide() { return window.innerWidth >= 1180; }
+function aiWide() { return window.innerWidth >= 1280; }
 
 function aiDecorate() {
   document.body.classList.toggle("ai-on", aiOn());
@@ -250,6 +250,9 @@ function aiRender() {
   document.body.classList.toggle("ai-rail-on", ids.length > 0);
   if (!ids.length) { document.getElementById("airail")?.remove(); return; }
 
+  AI.num = {};
+  ids.forEach((id, i) => { AI.num[id] = i + 1; });
+
   const rail = aiRailEl();
   rail.innerHTML = ids.map(id => aiCardHTML(id)).join("");
   rail.querySelectorAll(".aicard").forEach(c => AI_RO.observe(c));
@@ -305,6 +308,7 @@ function aiCardHTML(id) {
   return '\n  <div class="aicard ' + (active ? "active " : "") + (expanded ? "exp" : "") +
     '" data-card="' + id + '">\n' +
     '    <div class="aic-head" data-aiscroll="' + id + '" title="点击跳到原文">\n' +
+    '      <span class="aic-n">' + (AI.num[id] || "") + '</span>\n' +
     '      <span class="aic-q">' + quote + '</span>\n' +
     '      <button class="ai-x" data-aidel="' + id + '" title="删除这条批注">✕</button>\n' +
     '    </div>\n' +
@@ -336,7 +340,58 @@ function aiLayout() {
     prev = top + c.offsetHeight + 14;
   });
   rail.style.height = (prev + 60) + "px";
+  aiDrawLines(cards);
 }
+
+/* 从段落右缘牵一条曲线到对应卡片，并在段落侧点一个带编号的锚点 */
+function aiLinesEl() {
+  let g = document.getElementById("ailines");
+  if (!g) {
+    g = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    g.id = "ailines"; g.setAttribute("class", "ailines");
+    document.body.appendChild(g);
+  }
+  return g;
+}
+
+function aiDrawLines(cards) {
+  const svg = aiLinesEl();
+  if (!aiWide()) { svg.innerHTML = ""; svg.style.display = "none"; return; }
+  svg.style.display = "";
+  svg.setAttribute("width", document.documentElement.scrollWidth);
+  svg.setAttribute("height", document.documentElement.scrollHeight);
+
+  const NS = "http://www.w3.org/2000/svg";
+  const parts = [];
+  cards.forEach(c => {
+    const id = c.dataset.card;
+    const a = document.querySelector('[data-aiid="' + id + '"]');
+    if (!a || c.style.display === "none") return;
+    const ar = a.getBoundingClientRect(), cr = c.getBoundingClientRect();
+    const x1 = ar.right + scrollX + 6;
+    const y1 = ar.top + scrollY + Math.min(ar.height / 2, 13);
+    const x2 = cr.left + scrollX - 5;
+    const y2 = cr.top + scrollY + 20;
+    const mid = (x1 + x2) / 2;
+    parts.push(
+      '<path class="ailine" data-for="' + id + '" d="M ' + x1 + ' ' + y1 +
+      ' C ' + mid + ' ' + y1 + ', ' + mid + ' ' + y2 + ', ' + x2 + ' ' + y2 + '"/>' +
+      '<circle class="aidot" data-for="' + id + '" cx="' + x1 + '" cy="' + y1 + '" r="3.5"/>' +
+      '<text class="ainum" data-for="' + id + '" x="' + (x1 + 11) + '" y="' + (y1 + 4) + '">' +
+      (AI.num[id] || "") + '</text>');
+  });
+  svg.innerHTML = parts.join("");
+}
+
+/* 悬停卡片时点亮它那条线和对应段落 */
+document.addEventListener("mouseover", e => {
+  const card = e.target.closest?.(".aicard");
+  const id = card?.dataset.card;
+  document.querySelectorAll(".ailine,.aidot,.ainum").forEach(n =>
+    n.classList.toggle("hot", !!id && n.dataset.for === id));
+  document.querySelectorAll("[data-aiid]").forEach(n =>
+    n.classList.toggle("ai-hover", !!id && n.dataset.aiid === id));
+});
 window.addEventListener("resize", aiLayoutSoon);
 
 function aiOpen(id) {
