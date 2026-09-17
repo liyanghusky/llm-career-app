@@ -21,7 +21,7 @@ html{scroll-behavior:smooth}
 body{
   background:var(--washi); color:var(--tx);
   font-family:var(--serif); font-weight:400;
-  font-size:15px; line-height:1.85; -webkit-font-smoothing:antialiased;
+  font-size:16px; line-height:1.85; -webkit-font-smoothing:antialiased;
   min-height:100vh; padding-bottom:60px;
   background-image:radial-gradient(rgba(120,110,90,.05) 1px,transparent 1px);
   background-size:5px 5px;
@@ -39,7 +39,7 @@ code{font-family:var(--mono); font-size:.85em; background:rgba(120,110,90,.09);
   color:#5c4a3a; padding:1px 6px; border-radius:2px}
 pre{background:#efe9dc; border:1px solid var(--line); border-radius:var(--r);
   padding:15px 17px; overflow-x:auto; margin:13px 0; line-height:1.65}
-pre code{background:none; padding:0; color:#3f3a31; font-size:12.5px}
+pre code{background:none; padding:0; color:#3f3a31; font-size:13.5px}
 strong{color:#100f0c; font-weight:600}
 button{font-family:inherit; cursor:pointer; color:inherit}
 
@@ -79,13 +79,13 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 
 /* ───── generic ───── */
 .hd{margin-bottom:26px}
-.hd h1{font-size:26px; font-weight:400; letter-spacing:.04em; color:var(--tx); line-height:1.5}
-.hd p{color:var(--tx2); font-size:14px; margin-top:9px; max-width:70ch; font-weight:300}
+.hd h1{font-size:27px; font-weight:400; letter-spacing:.04em; color:var(--tx); line-height:1.5}
+.hd p{color:var(--tx2); font-size:15px; margin-top:9px; max-width:70ch; font-weight:300}
 .kicker{font-size:10px; letter-spacing:.38em; color:var(--tx3); text-transform:uppercase;
   font-weight:300; margin-bottom:9px}
 .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:20px 22px}
 .muted{color:var(--tx2)}
-.tiny{font-size:12.5px}
+.tiny{font-size:13.5px}
 .mono{font-family:var(--mono)}
 .callout{margin:12px 0; padding:12px 16px; background:rgba(59,74,90,.05);
   border-left:2px solid var(--ac2); font-weight:300}
@@ -105,13 +105,13 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 }
 .hero h1{font-size:clamp(25px,3.7vw,38px); font-weight:300; letter-spacing:.03em;
   line-height:1.45; max-width:22ch; color:var(--tx)}
-.hero p{color:var(--tx2); margin-top:18px; max-width:56ch; font-size:14.5px;
+.hero p{color:var(--tx2); margin-top:18px; max-width:58ch; font-size:15.5px;
   font-weight:300; line-height:1.95}
 .hero .cta{display:flex; gap:26px; margin-top:26px; flex-wrap:wrap; align-items:center}
 
 .btn{
   background:none; border:0; border-bottom:1px solid var(--tx);
-  font:inherit; font-size:14px; font-weight:400; letter-spacing:.14em; color:var(--tx);
+  font:inherit; font-size:15px; font-weight:400; letter-spacing:.14em; color:var(--tx);
   padding:6px 2px 7px; cursor:pointer; position:relative; transition:color .3s;
 }
 .btn::after{content:""; position:absolute; left:0; bottom:-1px; height:1px; width:0;
@@ -120,7 +120,7 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .btn:hover::after{width:100%}
 .btn.sec{color:var(--tx2); border-bottom-color:var(--line2)}
 .btn.sec:hover{color:var(--ac)}
-.btn.sm{font-size:12.5px; letter-spacing:.1em; padding:4px 2px 5px}
+.btn.sm{font-size:13.5px; letter-spacing:.1em; padding:4px 2px 5px}
 
 .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:0;
   border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin-bottom:28px}
@@ -142,11 +142,11 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
   border-bottom:1px solid var(--line); cursor:pointer; transition:.3s}
 .nx:hover{background:rgba(156,107,79,.045); padding-left:10px}
 .nx .ix{font-size:11px; color:var(--ac); padding-top:4px; min-width:16px; letter-spacing:.1em}
-.nx b{font-size:14px; color:var(--tx); font-weight:400; display:block; line-height:1.6}
-.nx span{font-size:12.5px; color:var(--tx3); font-weight:300}
+.nx b{font-size:15px; color:var(--tx); font-weight:400; display:block; line-height:1.6}
+.nx span{font-size:13.5px; color:var(--tx3); font-weight:300}
 
 .plan{border-top:1px solid var(--line)}
-.plan div{padding:10px 2px; display:flex; gap:16px; font-size:13px; align-items:baseline;
+.plan div{padding:10px 2px; display:flex; gap:16px; font-size:14px; align-items:baseline;
   border-bottom:1px solid var(--line); font-weight:300}
 .plan div b{font-size:10.5px; color:var(--tx3); min-width:56px; font-weight:400; letter-spacing:.08em}
 .plan div span{color:var(--tx2)}
@@ -162,9 +162,9 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .stage-h:hover{background:rgba(156,107,79,.04)}
 .stage-dot{width:7px; height:7px; border-radius:50%; flex:none}
 .stage-h .t{flex:1; min-width:0}
-.stage-h .t b{font-size:16px; color:var(--tx); font-weight:400; letter-spacing:.05em}
+.stage-h .t b{font-size:17px; color:var(--tx); font-weight:400; letter-spacing:.05em}
 .stage-h .t i{font-style:normal; font-size:11px; color:var(--tx3); margin-left:12px; font-weight:300}
-.stage-h .t p{font-size:12.5px; color:var(--tx2); margin-top:4px; font-weight:300}
+.stage-h .t p{font-size:13.5px; color:var(--tx2); margin-top:4px; font-weight:300}
 .stage-h .pct{font-size:12px; color:var(--tx3); flex:none; font-weight:300; letter-spacing:.08em}
 .stage-h .chev{color:var(--tx3); font-size:9px; transition:.35s; flex:none}
 .stage.open>.stage-h .chev{transform:rotate(90deg)}
@@ -181,12 +181,12 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .chk:hover{border-color:var(--ac)}
 .chk.on{background:var(--ok); border-color:var(--ok); color:var(--washi)}
 .node-t{flex:1; min-width:0; cursor:pointer}
-.node-t b{font-size:14px; color:var(--tx); font-weight:400}
+.node-t b{font-size:15px; color:var(--tx); font-weight:400}
 .node.done .node-t b{color:var(--tx3)}
 .node-t .est{font-size:10.5px; color:var(--tx3); margin-left:11px; font-weight:300}
 .key-tag{font-size:10px; color:var(--ac); padding:0 7px; margin-left:9px;
   letter-spacing:.14em; border-left:1px solid var(--line2); font-weight:300}
-.node-d{display:none; margin:11px 0 4px 29px; font-size:13.5px; color:var(--tx2);
+.node-d{display:none; margin:11px 0 4px 29px; font-size:14.5px; color:var(--tx2);
   border-left:1px solid var(--line); padding-left:18px; font-weight:300}
 .node.open .node-d{display:block}
 .node-d p{margin-bottom:9px}
@@ -202,8 +202,8 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .pcard:hover{background:rgba(156,107,79,.045)}
 .pcard .tier{font-size:10px; letter-spacing:.28em; color:var(--c); text-transform:uppercase;
   font-weight:300}
-.pcard h3{font-size:16px; color:var(--tx); margin:8px 0 9px; font-weight:400; line-height:1.55}
-.pcard p{font-size:12.8px; color:var(--tx2); line-height:1.85; font-weight:300}
+.pcard h3{font-size:17px; color:var(--tx); margin:8px 0 9px; font-weight:400; line-height:1.55}
+.pcard p{font-size:13.8px; color:var(--tx2); line-height:1.85; font-weight:300}
 .pmeta{display:flex; gap:14px; margin-top:15px; font-size:11px; color:var(--tx3);
   align-items:center; flex-wrap:wrap; font-weight:300}
 .stars{color:var(--ac); letter-spacing:.18em}
@@ -215,8 +215,8 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .combo{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:0;
   border-top:1px solid var(--line)}
 .cbox{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:18px 20px}
-.cbox b{color:var(--ac2); font-size:14px; font-weight:500; letter-spacing:.04em}
-.cbox p{font-size:12.5px; color:var(--tx2); margin-top:7px; font-weight:300}
+.cbox b{color:var(--ac2); font-size:15px; font-weight:500; letter-spacing:.04em}
+.cbox p{font-size:13.5px; color:var(--tx2); margin-top:7px; font-weight:300}
 .cbox .ids{margin-top:11px; display:flex; flex-direction:column; gap:5px}
 .cbox .ids span{font-size:12.5px; color:var(--tx2); cursor:pointer; font-weight:300; transition:.25s}
 .cbox .ids span:hover{color:var(--ac)}
@@ -229,7 +229,7 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .search:focus{border-bottom-color:var(--ac)}
 ::placeholder{color:var(--tx3); opacity:.85}
 .fbtn{background:none; border:1px solid var(--line); color:var(--tx2); font:inherit;
-  font-size:12px; padding:4px 13px; border-radius:14px; cursor:pointer; transition:.3s;
+  font-size:12.5px; padding:4px 13px; border-radius:14px; cursor:pointer; transition:.3s;
   white-space:nowrap; font-weight:300; letter-spacing:.05em}
 .fbtn:hover{color:var(--ac); border-color:var(--ac)}
 .fbtn.on{color:var(--washi); background:var(--ac2); border-color:var(--ac2)}
@@ -241,7 +241,7 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .catc:hover{background:rgba(156,107,79,.05)}
 .catc.on{background:rgba(59,74,90,.07)}
 .catc .ic{font-size:14px; color:var(--ac); font-family:var(--mono)}
-.catc b{display:block; font-size:13px; color:var(--tx); margin-top:4px; font-weight:400}
+.catc b{display:block; font-size:14px; color:var(--tx); margin-top:4px; font-weight:400}
 .catc .m{font-size:10.5px; color:var(--tx3); margin-top:5px; font-weight:300; letter-spacing:.06em}
 
 .q{border-bottom:1px solid var(--line); transition:.3s}
@@ -253,13 +253,13 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
   border:1px solid var(--line2); background:none}
 .mstate.s1{background:var(--wr); border-color:var(--wr)}
 .mstate.s2{background:var(--ok); border-color:var(--ok)}
-.q-h .qt{flex:1; min-width:0; font-size:14.5px; color:var(--tx); line-height:1.7; font-weight:400}
+.q-h .qt{flex:1; min-width:0; font-size:15.5px; color:var(--tx); line-height:1.7; font-weight:400}
 .lv{font-size:10px; padding:1px 9px; border:1px solid; border-radius:11px; flex:none;
   margin-top:4px; font-weight:300; letter-spacing:.1em}
 .lv1{color:var(--ok); border-color:rgba(107,125,92,.45)}
 .lv2{color:var(--wr); border-color:rgba(176,132,66,.45)}
 .lv3{color:var(--bad); border-color:rgba(168,80,63,.45)}
-.q-b{display:none; padding:2px 4px 20px 34px; font-size:14px; color:var(--tx2);
+.q-b{display:none; padding:2px 4px 20px 34px; font-size:15px; color:var(--tx2);
   line-height:1.95; font-weight:300}
 .q.open .q-b{display:block}
 .q-b p{margin-bottom:11px}
@@ -288,10 +288,10 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
   transform:rotate(-25deg); opacity:.16}
 .dcat{font-size:10px; letter-spacing:.3em; color:var(--tx3); margin-bottom:20px;
   font-weight:300; text-align:right}
-.dq{font-size:19px; color:var(--tx); line-height:1.8; font-weight:400; letter-spacing:.02em}
+.dq{font-size:20px; color:var(--tx); line-height:1.8; font-weight:400; letter-spacing:.02em}
 .dhint{margin-top:auto; padding-top:26px; color:var(--tx3); font-size:12.5px; text-align:center;
   font-weight:300}
-.da{margin-top:26px; padding-top:22px; border-top:1px solid var(--line); font-size:14px;
+.da{margin-top:26px; padding-top:22px; border-top:1px solid var(--line); font-size:15px;
   line-height:1.95; font-weight:300}
 .dctl{display:flex; gap:26px; justify-content:center; margin-top:26px; flex-wrap:wrap}
 .dctl button{padding:6px 4px 8px; font:inherit; font-size:14px; cursor:pointer;
@@ -313,7 +313,7 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .modal-x{position:absolute; right:18px; top:16px; background:none; border:0; color:var(--tx3);
   font-size:15px; cursor:pointer; padding:6px}
 .modal-x:hover{color:var(--ac)}
-.modal h2{font-size:21px; color:var(--tx); line-height:1.55; padding-right:30px; font-weight:400;
+.modal h2{font-size:22px; color:var(--tx); line-height:1.55; padding-right:30px; font-weight:400;
   letter-spacing:.03em}
 .modal h4{font-size:10.5px; letter-spacing:.3em; color:var(--tx3); text-transform:uppercase;
   margin:26px 0 12px; font-weight:300; padding-bottom:6px; border-bottom:1px solid var(--line)}
@@ -323,21 +323,21 @@ main{position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:34px
 .step .sc{margin-top:4px}
 .step b{font-size:11.5px; color:var(--ac); display:block; margin-bottom:4px; font-weight:400;
   letter-spacing:.08em}
-.step p{font-size:13px; color:var(--tx2); line-height:1.8; font-weight:300}
+.step p{font-size:14px; color:var(--tx2); line-height:1.8; font-weight:300}
 .step.done b{color:var(--tx3)}
 .step.done p{color:var(--tx3)}
 .rbox{background:rgba(107,125,92,.07); border-left:2px solid var(--ok);
-  padding:15px 18px; font-size:13.5px; color:var(--tx); line-height:1.9; font-weight:300}
-.asks li{font-size:13.5px; color:var(--tx2); margin-bottom:7px; margin-left:18px; font-weight:300}
+  padding:15px 18px; font-size:14.5px; color:var(--tx); line-height:1.9; font-weight:300}
+.asks li{font-size:14.5px; color:var(--tx2); margin-bottom:7px; margin-left:18px; font-weight:300}
 .pitfall{background:rgba(168,80,63,.06); border-left:2px solid var(--bad);
-  padding:15px 18px; font-size:13.5px; color:var(--tx2); margin-top:16px; font-weight:300}
+  padding:15px 18px; font-size:14.5px; color:var(--tx2); margin-top:16px; font-weight:300}
 
 /* ───── markdown 扩展 ───── */
-.lh3{font-size:15px; color:var(--tx); margin:18px 0 9px; font-weight:500; letter-spacing:.03em}
+.lh3{font-size:16px; color:var(--tx); margin:18px 0 9px; font-weight:500; letter-spacing:.03em}
 blockquote{border-left:2px solid var(--ac); background:rgba(156,107,79,.055);
   padding:13px 18px; margin:15px 0}
 blockquote p:last-child{margin-bottom:0}
-.formula{font-family:var(--mono); font-size:14px; color:#4a4034; text-align:center;
+.formula{font-family:var(--mono); font-size:15px; color:#4a4034; text-align:center;
   background:rgba(120,110,90,.06); border-top:1px solid var(--line);
   border-bottom:1px solid var(--line); padding:16px 18px; margin:16px 0; overflow-x:auto}
 
@@ -347,30 +347,30 @@ blockquote p:last-child{margin-bottom:0}
 .lbar .fbtn{cursor:pointer}
 .lhead{margin-bottom:30px; padding-bottom:24px; border-bottom:1px solid var(--line);
   position:relative}
-.lhead h1{font-size:27px; color:var(--tx); line-height:1.5; font-weight:300; letter-spacing:.03em}
-.lhead p{color:var(--tx2); font-size:14px; margin-top:12px; font-weight:300; line-height:1.9;
+.lhead h1{font-size:29px; color:var(--tx); line-height:1.5; font-weight:300; letter-spacing:.03em}
+.lhead p{color:var(--tx2); font-size:15px; margin-top:12px; font-weight:300; line-height:1.9;
   max-width:52ch}
 
 .ltoc{border-left:1px solid var(--line); padding:4px 0 4px 22px; margin-bottom:34px;
   display:flex; flex-direction:column; gap:7px}
 .ltoc b{font-size:10px; letter-spacing:.32em; color:var(--tx3); text-transform:uppercase;
   margin-bottom:6px; font-weight:300}
-.ltoc a{font-size:13.5px; color:var(--tx2); border:0; font-weight:300; transition:.25s}
+.ltoc a{font-size:14.5px; color:var(--tx2); border:0; font-weight:300; transition:.25s}
 .ltoc a:hover{color:var(--ac)}
 .ltoc a.qlink{color:var(--ac); margin-top:8px; padding-top:10px; border-top:1px solid var(--line)}
 
 .lsec{margin-bottom:40px; scroll-margin-top:78px}
-.lsec h2{font-size:19px; color:var(--tx); margin-bottom:18px; font-weight:400; line-height:1.6;
+.lsec h2{font-size:20.5px; color:var(--tx); margin-bottom:18px; font-weight:400; line-height:1.6;
   letter-spacing:.04em; padding-bottom:10px; border-bottom:1px solid var(--line)}
-.lsec p{margin-bottom:13px; font-size:15px; line-height:2.0; font-weight:300; color:#33302a}
+.lsec p{margin-bottom:13px; font-size:16.5px; line-height:2.0; font-weight:300; color:#33302a}
 .lsec ul,.lsec ol{margin:0 0 13px 20px}
-.lsec li{margin-bottom:7px; font-size:15px; line-height:1.95; font-weight:300; color:#33302a}
+.lsec li{margin-bottom:7px; font-size:16.5px; line-height:1.95; font-weight:300; color:#33302a}
 .lsec table{border-collapse:collapse; margin:16px 0; font-size:13.5px; width:100%}
-.lsec th,.lsec td{border:1px solid var(--line); padding:8px 13px; text-align:left}
+.lsec th,.lsec td{border:1px solid var(--line); padding:8px 13px; text-align:left; font-size:14.5px}
 .lsec th{background:rgba(120,110,90,.07); color:var(--ac2); font-weight:500}
 
 .quiz-head{margin-bottom:22px}
-.quiz-head p{font-size:13.5px; color:var(--tx2); margin-top:8px; font-weight:300}
+.quiz-head p{font-size:14.5px; color:var(--tx2); margin-top:8px; font-weight:300}
 
 .qz{border-top:1px solid var(--line); padding:22px 2px 20px; transition:.3s}
 .qz:last-child{border-bottom:1px solid var(--line)}
@@ -382,20 +382,20 @@ blockquote p:last-child{margin-bottom:0}
   flex:none; margin-top:4px; font-weight:400}
 .qz.ok .qz-no{background:var(--ok)}
 .qz-q>div,.qz-q>p{flex:1; min-width:0}
-.qz-q p{margin:0; font-size:15px; color:var(--tx); line-height:1.8; font-weight:400}
+.qz-q p{margin:0; font-size:16px; color:var(--tx); line-height:1.8; font-weight:400}
 .qz-q pre{margin:9px 0}
 
 .qinput{background:none; border:0; border-bottom:1px solid var(--line2);
-  padding:7px 2px; color:var(--tx); font:inherit; font-family:var(--mono); font-size:15px;
+  padding:7px 2px; color:var(--tx); font:inherit; font-family:var(--mono); font-size:16px;
   width:220px; outline:none; transition:border-color .4s}
 .qinput:focus{border-bottom-color:var(--ac)}
 .qta{background:rgba(255,255,255,.4); border:1px solid var(--line); padding:13px 15px;
-  color:var(--tx); font:inherit; font-size:14px; width:100%; min-height:92px; outline:none;
+  color:var(--tx); font:inherit; font-size:15px; width:100%; min-height:92px; outline:none;
   resize:vertical; line-height:1.9; font-weight:300; transition:border-color .4s}
 .qta:focus{border-color:var(--ac)}
 .choices{display:flex; flex-direction:column; gap:0; border-top:1px solid var(--line)}
 .ch{display:flex; gap:11px; align-items:flex-start; padding:11px 4px;
-  border-bottom:1px solid var(--line); cursor:pointer; font-size:14px;
+  border-bottom:1px solid var(--line); cursor:pointer; font-size:15px;
   color:var(--tx2); transition:.25s; line-height:1.75; font-weight:300}
 .ch:hover{background:rgba(156,107,79,.045); color:var(--tx)}
 .ch.sel{color:var(--tx); background:rgba(59,74,90,.06)}
@@ -408,14 +408,14 @@ blockquote p:last-child{margin-bottom:0}
 .qz-msg.ok{color:var(--ok)}
 .qz-msg.bad{color:var(--bad)}
 .qz-hint{margin-top:16px; padding:13px 17px; background:rgba(176,132,66,.07);
-  border-left:2px solid var(--wr); font-size:13.5px; line-height:1.9; font-weight:300}
+  border-left:2px solid var(--wr); font-size:14.5px; line-height:1.9; font-weight:300}
 .qz-hint b,.qz-why b{display:block; font-size:10px; letter-spacing:.24em;
   text-transform:uppercase; margin-bottom:7px; font-weight:400}
 .qz-hint b{color:var(--wr)}
 .qz-why b{color:var(--ok)}
 .qz-hint p:last-child,.qz-why p:last-child{margin-bottom:0}
 .qz-why{margin-top:16px; padding:16px 18px; background:rgba(107,125,92,.06);
-  border-left:2px solid var(--ok); font-size:13.5px; line-height:1.95; font-weight:300}
+  border-left:2px solid var(--ok); font-size:14.5px; line-height:1.95; font-weight:300}
 
 .lfoot{margin-top:40px; padding-top:26px; border-top:1px solid var(--line)}
 .lfoot-ok{color:var(--ok); font-size:14px; margin-bottom:18px; display:flex;
@@ -429,12 +429,12 @@ blockquote p:last-child{margin-bottom:0}
 .revbox div{display:flex; gap:7px; flex-wrap:wrap}
 .revbox .chip{cursor:pointer; transition:.25s}
 .revbox .chip:hover{border-color:var(--pu); color:var(--pu)}
-.lc-intro{margin-bottom:26px; font-size:14px; line-height:1.95; font-weight:300;
+.lc-intro{margin-bottom:26px; font-size:15px; line-height:1.95; font-weight:300;
   border:0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
   background:none; padding:22px 0}
 .lc-intro p{margin-bottom:11px}
 .lc-intro ul{margin:0 0 11px 20px}
-.lc-pattern{padding:6px 2px 18px; font-size:13.5px; color:var(--tx2); line-height:1.95;
+.lc-pattern{padding:6px 2px 18px; font-size:14.5px; color:var(--tx2); line-height:1.95;
   border-bottom:1px solid var(--line); margin-bottom:4px; font-weight:300}
 .lc-pattern p{margin-bottom:10px}
 .lc-pattern ul{margin:0 0 10px 20px}
@@ -447,22 +447,22 @@ blockquote p:last-child{margin-bottom:0}
 .lcp.s2 .lcdot{background:var(--ok); border-color:var(--ok)}
 .lcp.s3 .lcdot{background:var(--bad); border-color:var(--bad)}
 .lcp-t{flex:1; min-width:0}
-.lcp-t b{font-size:14px; color:var(--tx); font-weight:400}
+.lcp-t b{font-size:15px; color:var(--tx); font-weight:400}
 .lcp.s2 .lcp-t b{color:var(--tx3)}
 .lcp-b{display:none; padding:4px 4px 20px 32px}
 .lcp.open .lcp-b{display:block}
 .lcp.open .chev{transform:rotate(90deg)}
 .lcp .chev{color:var(--tx3); font-size:9px; transition:.35s; flex:none}
-.lcwhy{font-size:13.5px; color:var(--tx2); line-height:1.9; margin-bottom:12px; font-weight:300}
+.lcwhy{font-size:14.5px; color:var(--tx2); line-height:1.9; margin-bottom:12px; font-weight:300}
 .lcwhy b{display:block; font-size:10px; letter-spacing:.2em; color:var(--ac);
   text-transform:uppercase; margin-bottom:5px; font-weight:400}
 .hintbox{display:flex; flex-direction:column; gap:9px; align-items:flex-start; margin:14px 0}
 .hint-on{background:rgba(176,132,66,.07); border-left:2px solid var(--wr); padding:11px 16px;
-  font-size:13.5px; color:var(--tx2); line-height:1.9; width:100%; font-weight:300}
+  font-size:14.5px; color:var(--tx2); line-height:1.9; width:100%; font-weight:300}
 .hint-on b{display:block; font-size:10px; letter-spacing:.2em; color:var(--wr);
   margin-bottom:5px; font-weight:400}
 .keybox{background:rgba(107,125,92,.06); border-left:2px solid var(--ok);
-  padding:15px 18px; font-size:13.5px; line-height:1.95; margin:14px 0; font-weight:300}
+  padding:15px 18px; font-size:14.5px; line-height:1.95; margin:14px 0; font-weight:300}
 .keybox>b{display:block; font-size:10px; letter-spacing:.2em; color:var(--ok);
   text-transform:uppercase; margin-bottom:7px; font-weight:400}
 .keybox p:last-of-type{margin-bottom:0}
@@ -538,10 +538,11 @@ body{position:relative}
 }
 .aic-head:active{cursor:grabbing}
 
-/* 拖出来的浮窗 */
+/* 拖出来的浮窗：停在文档坐标上，跟着页面一起滚 */
+.aifloat{position:absolute; top:0; left:0; width:0; height:0; z-index:32}
 .aicard.floating{
-  position:fixed !important; right:auto; z-index:70;
-  box-shadow:0 18px 50px rgba(35,33,28,.24); border-color:var(--line2);
+  position:absolute; right:auto; z-index:32;
+  box-shadow:0 14px 40px rgba(35,33,28,.20); border-color:var(--line2);
 }
 .aicard.floating .aic-head{background:rgba(156,107,79,.10)}
 .aicard.nodrag-anim{transition:none !important}
@@ -560,7 +561,7 @@ body.ai-dragging-corner{user-select:none; cursor:nwse-resize}
 .aic-corner:hover::after{border-color:var(--ac)}
 .aic-head:hover .aic-q{color:var(--tx)}
 .aic-q{
-  flex:1; min-width:0; font-size:12px; line-height:1.6; color:var(--tx3); font-weight:300;
+  flex:1; min-width:0; font-size:12.5px; line-height:1.6; color:var(--tx3); font-weight:300;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
   transition:color .25s;
 }
@@ -613,25 +614,25 @@ body.ai-dragging-v{user-select:none; cursor:ns-resize}
 
 .aic-more{font-size:10.5px; color:var(--tx3); letter-spacing:.1em; padding-bottom:6px}
 .aic-body:empty{display:none}
-.ai-u{font-size:13px; color:var(--ac2); margin:0 0 10px; padding-left:11px;
+.ai-u{font-size:14px; color:var(--ac2); margin:0 0 10px; padding-left:11px;
   border-left:2px solid rgba(59,74,90,.3); font-weight:300; line-height:1.7}
 .ai-u p{margin:0}
-.ai-a{font-size:14px; line-height:1.95; color:var(--tx); margin:0 0 13px; font-weight:300}
+.ai-a{font-size:15px; line-height:1.95; color:var(--tx); margin:0 0 13px; font-weight:300}
 .ai-a p{margin-bottom:9px}
 .ai-a ul,.ai-a ol{margin:0 0 9px 18px}
 .ai-a li{margin-bottom:4px}
 .ai-a pre,.ai-a blockquote{margin:9px 0}
-.ai-a pre{font-size:12px; padding:11px 13px}
+.ai-a pre{font-size:12.5px; padding:11px 13px}
 .ai-a code{font-size:.82em}
 .ai-think{color:var(--tx3); font-size:12.5px}
 .ai-think::after{content:""; animation:aidot 1.5s steps(4,end) infinite}
 @keyframes aidot{0%{content:""}25%{content:"·"}50%{content:"··"}75%{content:"···"}}
 
 .ai-presets{display:flex; gap:6px; flex-wrap:wrap; padding:11px 17px 0}
-.ai-presets .fbtn{font-size:11.5px; padding:3px 10px}
+.ai-presets .fbtn{font-size:12px; padding:3px 11px}
 .ai-ctl{display:flex; gap:12px; align-items:flex-end; padding:11px 17px 13px}
 .ai-ta{flex:1; background:none; border:0; border-bottom:1px solid var(--line2);
-  padding:6px 2px; color:var(--tx); font:inherit; font-size:13.5px; outline:none;
+  padding:6px 2px; color:var(--tx); font:inherit; font-size:14.5px; outline:none;
   resize:none; line-height:1.7; max-height:120px; font-weight:300; transition:border-color .4s}
 .ai-ta:focus{border-bottom-color:var(--ac)}
 

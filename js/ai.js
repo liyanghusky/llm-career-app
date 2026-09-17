@@ -229,6 +229,16 @@ function aiLayoutSoon() {
   aiLayoutTimer = setTimeout(aiLayout, 16);
 }
 
+function aiFloatEl() {
+  let f = document.getElementById("aifloat");
+  if (!f) {
+    f = document.createElement("div");
+    f.id = "aifloat"; f.className = "aifloat";
+    document.body.appendChild(f);
+  }
+  return f;
+}
+
 function aiRailEl() {
   let r = document.getElementById("airail");
   if (!r) {
@@ -263,15 +273,21 @@ function aiRender() {
     document.getElementById("airail")?.remove();
     const g = document.getElementById("airailgrip"); if (g) g.style.display = "none";
     document.getElementById("ailines")?.remove();
+    document.getElementById("aifloat")?.remove();
     return;
   }
 
   AI.num = {};
   ids.forEach((id, i) => { AI.num[id] = i + 1; });
 
+  const anchored = ids.filter(id => !AIL.float[id]);
+  const floated  = ids.filter(id => AIL.float[id]);
+
   const rail = aiRailEl();
-  rail.innerHTML = ids.map(id => aiCardHTML(id)).join("");
-  rail.querySelectorAll(".aicard").forEach(c => AI_RO.observe(c));
+  rail.innerHTML = anchored.map(id => aiCardHTML(id)).join("");
+  const fbox = aiFloatEl();
+  fbox.innerHTML = floated.map(id => aiCardHTML(id)).join("");
+  document.querySelectorAll(".aicard").forEach(c => AI_RO.observe(c));
 
   aiApplyRailW();
   aiGripEl();
@@ -349,7 +365,7 @@ function aiCardHTML(id) {
 function aiLayout() {
   const rail = document.getElementById("airail");
   if (!rail) return;
-  const cards = [...rail.querySelectorAll(".aicard")];
+  const cards = [...rail.querySelectorAll(".aicard")];   // 只排锚定的
   if (!aiWide()) {
     rail.classList.add("narrow");
     rail.style.height = "";
@@ -359,17 +375,17 @@ function aiLayout() {
   rail.classList.remove("narrow");
   const railTop = rail.getBoundingClientRect().top + window.scrollY;
   let prev = 0;
+  // 浮窗：绝对定位在文档坐标上，跟着页面一起滚
+  document.querySelectorAll("#aifloat .aicard").forEach(c => {
+    const fl = AIL.float[c.dataset.card];
+    if (!fl) return;
+    c.style.left = Math.round(fl.x) + "px";
+    c.style.top = Math.round(fl.y) + "px";
+    c.style.width = Math.round(fl.w) + "px";
+  });
+
   cards.forEach(c => {
     const id = c.dataset.card;
-    const fl = AIL.float[id];
-    if (fl) {                                  // 浮窗：固定在视口坐标
-      c.style.display = "";
-      c.style.top = "";
-      c.style.left = Math.round(fl.x) + "px";
-      c.style.setProperty("top", Math.round(fl.y) + "px", "important");
-      c.style.width = Math.round(fl.w) + "px";
-      return;
-    }
     c.style.left = ""; c.style.width = "";
     const anchor = document.querySelector('[data-aiid="' + id + '"]');
     if (!anchor) { c.style.display = "none"; return; }
@@ -380,7 +396,7 @@ function aiLayout() {
     prev = top + c.offsetHeight + 14;
   });
   rail.style.height = (prev + 60) + "px";
-  aiDrawLines(cards);
+  aiDrawLines([...cards, ...document.querySelectorAll("#aifloat .aicard")]);
 }
 
 /* 从段落右缘牵一条曲线到对应卡片，并在段落侧点一个带编号的锚点 */
@@ -408,8 +424,6 @@ function aiDrawLines(cards) {
     const a = document.querySelector('[data-aiid="' + id + '"]');
     if (!a || c.style.display === "none") return;
     const ar = a.getBoundingClientRect(), cr = c.getBoundingClientRect();
-    // 锚点滚出视口太远时不画线，避免横跨整页的长线
-    if (AIL.float[id] && (ar.bottom < -80 || ar.top > innerHeight + 80)) return;
     const x1 = ar.right + scrollX + 6;
     const y1 = ar.top + scrollY + Math.min(ar.height / 2, 13);
     const x2 = cr.left + scrollX - 5;
@@ -479,13 +493,15 @@ document.addEventListener("mousedown", e => {
       moved = true;
       document.body.classList.add("ai-dragging-card");
       card.classList.add("floating", "nodrag-anim");
-      AIL.float[id] = { x: r0.left, y: r0.top, w: r0.width };
+      AIL.float[id] = { x: r0.left + scrollX, y: r0.top + scrollY, w: r0.width };
+      aiFloatEl().appendChild(card);               // 移出批注栏，改挂到文档层
     }
     const w = AIL.float[id].w;
-    AIL.float[id].x = Math.max(8, Math.min(innerWidth - w - 8, ev.clientX - offX));
-    AIL.float[id].y = Math.max(8, Math.min(innerHeight - 60, ev.clientY - offY));
+    const maxX = document.documentElement.clientWidth - w - 10;
+    AIL.float[id].x = Math.max(8, Math.min(maxX, ev.pageX - offX));
+    AIL.float[id].y = Math.max(8, ev.pageY - offY);
     card.style.left = Math.round(AIL.float[id].x) + "px";
-    card.style.setProperty("top", Math.round(AIL.float[id].y) + "px", "important");
+    card.style.top = Math.round(AIL.float[id].y) + "px";
     card.style.width = Math.round(w) + "px";
     aiLayoutSoon();
   };
@@ -532,11 +548,6 @@ document.addEventListener("mousedown", e => {
   document.addEventListener("mousemove", move);
   document.addEventListener("mouseup", up);
 });
-
-/* 浮窗时滚动要重画连线（卡片是视口坐标，锚点是文档坐标） */
-addEventListener("scroll", () => {
-  if (Object.keys(AIL.float).length) aiLayoutSoon();
-}, { passive: true });
 
 /* ── 拖拽调整：单张卡片高度 ── */
 document.addEventListener("mousedown", e => {
