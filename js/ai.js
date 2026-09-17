@@ -7,7 +7,7 @@
 const AIKEY  = "llm-career-ai-v1";
 const AICKEY = "llm-career-ai-cfg";
 
-const AI = { sample: null, runtime: false, ctl: {}, active: null };
+const AI = { sample: null, runtime: false, ctl: {}, active: null, open: new Set() };
 const AIT = JSON.parse(localStorage.getItem(AIKEY) || "{}");     // aiid -> {turns, open}
 let AICFG = Object.assign(
   { mode: "off", key: "", base: "", model: "" },
@@ -177,14 +177,17 @@ function aiCtx(el) {
   return parts.join("\n");
 }
 
+function aiWide() { return window.innerWidth >= 1180; }
+
 function aiDecorate() {
   document.body.classList.toggle("ai-on", aiOn());
   if (!aiOn()) {
     document.querySelectorAll(".aibtn").forEach(b => b.remove());
     document.querySelectorAll("[data-aiid]").forEach(e => {
-      delete e.dataset.aiid; e.classList.remove("aiblk", "ai-active");
+      delete e.dataset.aiid; e.classList.remove("aiblk", "ai-has", "ai-active");
     });
-    aiClose();
+    document.getElementById("airail")?.remove();
+    document.body.classList.remove("ai-rail-on");
     return;
   }
   document.querySelectorAll(AI_CONTAINERS.join(",")).forEach(box => {
@@ -197,116 +200,184 @@ function aiDecorate() {
       el.classList.add("aiblk");
       const b = document.createElement("button");
       b.className = "aibtn"; b.type = "button";
-      b.title = "让 AI 详细解释这一段";
+      b.title = "针对这一段问 AI";
       b.textContent = "詳解";
-      b.onclick = ev => { ev.stopPropagation(); aiToggle(id, el); };
+      b.onclick = ev => { ev.stopPropagation(); aiOpen(id); };
       el.appendChild(b);
     });
   });
-  // 有历史对话的块做个标记；当前正在问的块高亮
-  document.querySelectorAll("[data-aiid]").forEach(el => {
-    const id = el.dataset.aiid;
-    el.classList.toggle("ai-has", !!(AIT[id] && AIT[id].turns && AIT[id].turns.length));
-    el.classList.toggle("ai-active", AI.active === id);
-  });
+  aiRender();
 }
 
-/* ── 右侧面板 ── */
-function aiSideEl() {
-  let p = document.getElementById("aiside");
-  if (!p) {
-    p = document.createElement("aside");
-    p.id = "aiside";
-    p.className = "aiside";
-    document.body.appendChild(p);
+/* ── 右侧批注栏 ── */
+const AI_RO = new ResizeObserver(() => aiLayoutSoon());
+let aiLayoutTimer = null;
+function aiLayoutSoon() {
+  // 用定时器而不是 rAF：后台标签页里 rAF 会被暂停，布局就停在旧位置
+  clearTimeout(aiLayoutTimer);
+  aiLayoutTimer = setTimeout(aiLayout, 16);
+}
+
+function aiRailEl() {
+  let r = document.getElementById("airail");
+  if (!r) {
+    r = document.createElement("div");
+    r.id = "airail"; r.className = "airail";
+    document.body.appendChild(r);
   }
-  return p;
+  return r;
 }
 
-function aiToggle(id, el) {
-  if (AI.active === id) { aiClose(); return; }
-  AI.active = id;
-  AIT[id] = AIT[id] || { turns: [] };
-  aiSave();
-  aiPaint();
-  document.body.classList.add("ai-side-open");
-  aiSideEl().classList.add("on");
-  document.querySelectorAll("[data-aiid]").forEach(x =>
-    x.classList.toggle("ai-active", x.dataset.aiid === id));
-  if (!AIT[id].turns.length) {
-    setTimeout(() => aiSideEl().querySelector(".ai-ta")?.focus(), 350);
-  }
-}
-
-function aiClose() {
-  AI.active = null;
-  document.body.classList.remove("ai-side-open");
-  document.getElementById("aiside")?.classList.remove("on");
-  document.querySelectorAll(".ai-active").forEach(x => x.classList.remove("ai-active"));
+/* 当前页面上有锚点的卡片，按锚点位置从上到下排序 */
+function aiCardIds() {
+  return Object.keys(AIT)
+    .filter(id => document.querySelector('[data-aiid="' + id + '"]'))
+    .map(id => ({
+      id,
+      y: document.querySelector('[data-aiid="' + id + '"]').getBoundingClientRect().top + window.scrollY
+    }))
+    .sort((p, q) => p.y - q.y)
+    .map(x => x.id);
 }
 
 function aiBlockText(id) {
-  const el = document.querySelector(`[data-aiid="${id}"]`);
+  const el = document.querySelector('[data-aiid="' + id + '"]');
   return el ? (el.innerText || "").replace(/詳解\s*$/, "").trim() : "";
 }
 
-function aiPaint() {
-  const p = aiSideEl();
-  const id = AI.active;
-  if (!id) { p.innerHTML = ""; return; }
+function aiRender() {
+  const ids = aiCardIds();
+  document.body.classList.toggle("ai-rail-on", ids.length > 0);
+  if (!ids.length) { document.getElementById("airail")?.remove(); return; }
+
+  const rail = aiRailEl();
+  rail.innerHTML = ids.map(id => aiCardHTML(id)).join("");
+  rail.querySelectorAll(".aicard").forEach(c => AI_RO.observe(c));
+
+  document.querySelectorAll("[data-aiid]").forEach(el => {
+    const id = el.dataset.aiid;
+    el.classList.toggle("ai-has", ids.includes(id));
+    el.classList.toggle("ai-active", AI.active === id);
+  });
+  aiLayoutSoon();
+}
+
+function aiCardHTML(id) {
   const t = AIT[id] || { turns: [] };
   const busy = !!AI.ctl[id];
-  const quote = aiBlockText(id).slice(0, 220);
+  const active = AI.active === id;
+  const full = aiBlockText(id);
+  const quote = full.slice(0, 90) + (full.length > 90 ? "…" : "");
+  // 展开：正在提问、正在生成、或用户点开了。否则只显示最后一轮回答的前几行
+  const expanded = active || busy || AI.open.has(id);
+  const last = [...t.turns].reverse().find(m => m.role === "assistant");
 
-  p.innerHTML = `
-    <div class="ai-head">
-      <span class="ai-tag">詳解</span>
-      ${t.turns.length ? `<button class="ai-x" data-aiclear="${id}">清空</button>` : ""}
-      <button class="ai-x" data-aiclose="1" title="关闭（Esc）">✕</button>
-    </div>
-    ${quote ? `<div class="ai-quote" data-aiscroll="${id}" title="点击回到原文">${quote}${
-      aiBlockText(id).length > 220 ? "…" : ""}</div>` : ""}
-    <div class="ai-body" id="aibody">
-      ${t.turns.length || busy ? "" : `<div class="ai-empty">
-        选中的这段有什么不懂的，直接问。<br>下面几个是常用的追问方向。</div>`}
-      ${t.turns.map(m => m.role === "user"
-        ? `<div class="ai-u">${md(m.content)}</div>`
-        : `<div class="ai-a">${md(m.content)}</div>`).join("")}
-      ${busy ? `<div class="ai-a ai-live" id="ail-${id}"><span class="ai-think">正在思考</span></div>` : ""}
-    </div>
-    <div class="ai-foot">
-      ${busy
-        ? `<div class="ai-ctl"><button class="btn sec sm" data-aistop="${id}">停止</button></div>`
-        : `<div class="ai-presets">
-             ${AI_PRESETS.map((x, i) => `<button class="fbtn" data-aiask="${id}:${i}">${x[0]}</button>`).join("")}
-           </div>
-           <div class="ai-ctl">
-             <textarea class="ai-ta" data-aita="${id}" rows="1" placeholder="哪里不懂就问哪里…"></textarea>
-             <button class="btn sm" data-aisend="${id}">問</button>
-           </div>`}
-    </div>`;
+  let body;
+  if (expanded) {
+    body = t.turns.map(m => m.role === "user"
+      ? '<div class="ai-u">' + md(m.content) + '</div>'
+      : '<div class="ai-a">' + md(m.content) + '</div>').join("") +
+      (busy ? '<div class="ai-a" id="ail-' + id + '"><span class="ai-think">正在思考</span></div>' : "");
+  } else if (last) {
+    body = '<div class="ai-a clamp">' + md(last.content) + '</div>' +
+      (t.turns.length > 2 ? '<div class="aic-more">共 ' + t.turns.filter(m => m.role === "user").length + ' 问</div>' : "");
+  } else {
+    body = '';
+  }
 
-  const body = document.getElementById("aibody");
-  if (body) body.scrollTop = body.scrollHeight;
+  let foot;
+  if (busy) {
+    foot = '<div class="ai-ctl"><button class="btn sec sm" data-aistop="' + id + '">停止</button></div>';
+  } else if (active) {
+    foot = '<div class="ai-presets">' +
+      AI_PRESETS.map((x, i) => '<button class="fbtn" data-aiask="' + id + ':' + i + '">' + x[0] + '</button>').join("") +
+      '</div><div class="ai-ctl">' +
+      '<textarea class="ai-ta" data-aita="' + id + '" rows="1" placeholder="哪里不懂就问哪里…"></textarea>' +
+      '<button class="btn sm" data-aisend="' + id + '">問</button></div>';
+  } else {
+    foot = '<div class="ai-ctl">' +
+      '<button class="btn sec sm" data-aifocus="' + id + '">' + (t.turns.length ? "继续追问" : "提问") + '</button>' +
+      (t.turns.length ? '<button class="btn sec sm" data-aitoggle="' + id + '" style="margin-left:auto">' +
+        (expanded ? "收起" : "展开") + '</button>' : "") +
+      '</div>';
+  }
+
+  return '\n  <div class="aicard ' + (active ? "active " : "") + (expanded ? "exp" : "") +
+    '" data-card="' + id + '">\n' +
+    '    <div class="aic-head" data-aiscroll="' + id + '" title="点击跳到原文">\n' +
+    '      <span class="aic-q">' + quote + '</span>\n' +
+    '      <button class="ai-x" data-aidel="' + id + '" title="删除这条批注">✕</button>\n' +
+    '    </div>\n' +
+    (body ? '    <div class="aic-body" ' + (expanded ? '' : 'data-aitoggle="' + id + '"') + '>' + body + '</div>\n' : '') +
+    foot + '\n  </div>';
+}
+
+/* 卡片对齐各自的锚点段落，重叠时顺延 */
+function aiLayout() {
+  const rail = document.getElementById("airail");
+  if (!rail) return;
+  const cards = [...rail.querySelectorAll(".aicard")];
+  if (!aiWide()) {
+    rail.classList.add("narrow");
+    rail.style.height = "";
+    cards.forEach(c => { c.style.top = ""; });
+    return;
+  }
+  rail.classList.remove("narrow");
+  const railTop = rail.getBoundingClientRect().top + window.scrollY;
+  let prev = 0;
+  cards.forEach(c => {
+    const anchor = document.querySelector('[data-aiid="' + c.dataset.card + '"]');
+    if (!anchor) { c.style.display = "none"; return; }
+    c.style.display = "";
+    const aTop = anchor.getBoundingClientRect().top + window.scrollY - railTop;
+    const top = Math.max(aTop, prev);
+    c.style.top = top + "px";
+    prev = top + c.offsetHeight + 14;
+  });
+  rail.style.height = (prev + 60) + "px";
+}
+window.addEventListener("resize", aiLayoutSoon);
+
+function aiOpen(id) {
+  AIT[id] = AIT[id] || { turns: [] };
+  AI.active = id;
+  aiSave(); aiRender();
+  setTimeout(() => {
+    const card = document.querySelector('.aicard[data-card="' + id + '"]');
+    card?.querySelector(".ai-ta")?.focus({ preventScroll: true });
+    if (!aiWide()) card?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, 60);
+}
+
+function aiRemove(id) {
+  delete AIT[id];
+  if (AI.active === id) AI.active = null;
+  aiSave(); aiRender();
 }
 
 async function aiAsk(id, question) {
   if (!aiOn() || AI.ctl[id]) return;
-  const el = document.querySelector(`[data-aiid="${id}"]`);
+  const el = document.querySelector('[data-aiid="' + id + '"]');
   if (!el) return;
-  const t = (AIT[id] = AIT[id] || { turns: [], open: true });
-  const blockText = (el.innerText || "").replace(/詳解\s*$/, "").trim().slice(0, 3000);
-  const ctxTurn = `${AI_RULES}\n\n${aiCtx(el)}\n\n学习者正在看的这段内容：\n"""\n${blockText}\n"""`;
+  const t = (AIT[id] = AIT[id] || { turns: [] });
+  const blockText = aiBlockText(id).slice(0, 3000);
+  const ctxTurn = AI_RULES + "\n\n" + aiCtx(el) +
+    '\n\n学习者正在看的这段内容：\n"""\n' + blockText + '\n"""';
 
   t.turns.push({ role: "user", content: question });
   const ctl = new AbortController();
   AI.ctl[id] = ctl;
-  aiSave(); aiPaint();
+  AI.active = id;
+  aiSave(); aiRender();
 
   try {
     const text = await aiCall(ctxTurn, t.turns.slice(0, -1), question, {
       signal: ctl.signal,
-      onText: txt => { const live = document.getElementById("ail-" + id); if (live) live.innerHTML = md(txt); }
+      onText: txt => {
+        const live = document.getElementById("ail-" + id);
+        if (live) { live.innerHTML = md(txt); aiLayoutSoon(); }
+      }
     });
     t.turns.push({ role: "assistant", content: text });
   } catch (e) {
@@ -320,7 +391,8 @@ async function aiAsk(id, question) {
     }
   } finally {
     delete AI.ctl[id];
-    aiSave(); aiPaint(); aiDecorate();
+    AI.open.add(id);            // 刚问完的保持展开
+    aiSave(); aiRender();
   }
 }
 
@@ -388,12 +460,19 @@ document.addEventListener("click", e => {
   const stop = e.target.closest("[data-aistop]");
   if (stop) { AI.ctl[stop.dataset.aistop]?.abort(); return; }
 
-  if (e.target.closest("[data-aiclose]")) { aiClose(); aiDecorate(); return; }
-  const clr = e.target.closest("[data-aiclear]");
-  if (clr) { AIT[clr.dataset.aiclear].turns = []; aiSave(); aiPaint(); aiDecorate(); return; }
+  const del = e.target.closest("[data-aidel]");
+  if (del) { e.stopPropagation(); aiRemove(del.dataset.aidel); return; }
+  const foc = e.target.closest("[data-aifocus]");
+  if (foc) { aiOpen(foc.dataset.aifocus); return; }
+  const tg = e.target.closest("[data-aitoggle]");
+  if (tg) {
+    const id = tg.dataset.aitoggle;
+    AI.open.has(id) ? AI.open.delete(id) : AI.open.add(id);
+    aiRender(); return;
+  }
   const scr = e.target.closest("[data-aiscroll]");
   if (scr) {
-    document.querySelector(`[data-aiid="${scr.dataset.aiscroll}"]`)
+    document.querySelector('[data-aiid="' + scr.dataset.aiscroll + '"]')
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
@@ -447,7 +526,7 @@ document.addEventListener("input", e => {
 
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && AI.active && document.getElementById("modal")?.hidden !== false) {
-    aiClose(); aiDecorate();
+    AI.active = null; aiRender();
   }
 }, true);
 

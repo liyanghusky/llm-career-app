@@ -490,79 +490,91 @@ pre.aiblk>.aibtn{top:6px; right:6px}
   .aibtn::before{content:"✦"; font-size:9px; line-height:1}
 }
 
-/* 右侧詳解面板 */
-.aiside{
-  position:fixed; top:0; right:0; bottom:0; width:min(430px,94vw); z-index:60;
-  background:var(--washi); border-left:1px solid var(--line2);
-  display:flex; flex-direction:column;
-  transform:translateX(103%); transition:transform .34s cubic-bezier(.4,0,.2,1);
-  box-shadow:-14px 0 40px rgba(35,33,28,.10);
-  background-image:radial-gradient(rgba(120,110,90,.05) 1px,transparent 1px);
-  background-size:5px 5px;
+/* 右侧批注栏 —— 每个问题一张卡，对齐它所属的段落 */
+body{position:relative}
+.airail{
+  position:absolute; top:0; right:0; width:400px; z-index:30; pointer-events:none;
 }
-.aiside.on{transform:none}
-.aiside:empty{display:none}
-/* 宽屏时把正文让开，不遮挡 */
+.airail .aicard{pointer-events:auto}
+/* 够宽才留出批注栏的位置，否则卡片改成贴底抽屉 */
 @media(min-width:1180px){
-  body.ai-side-open{padding-right:430px}
-  body.ai-side-open .topbar{padding-right:24px}
+  body.ai-rail-on{padding-right:432px}
+  body.ai-rail-on .topbar{padding-right:24px}
 }
 
-.ai-head{display:flex; align-items:center; gap:10px; padding:0 16px; height:62px; flex:none;
-  border-bottom:1px solid var(--line); background:rgba(235,229,216,.6)}
-.ai-tag{font-size:11px; letter-spacing:.34em; color:var(--ac); font-weight:400}
-.ai-x{margin-left:auto; background:none; border:0; color:var(--tx3); cursor:pointer;
-  font:inherit; font-size:12px; padding:4px 7px; font-weight:300; transition:color .25s}
-.ai-x+.ai-x{margin-left:0}
-.ai-x:hover{color:var(--ac)}
+.aicard{
+  position:absolute; right:16px; width:384px;
+  background:var(--washi); border:1px solid var(--line); border-radius:var(--r);
+  box-shadow:0 2px 14px rgba(35,33,28,.06);
+  transition:top .28s cubic-bezier(.4,0,.2,1), border-color .25s, box-shadow .25s;
+}
+.aicard.active{border-color:var(--ac); box-shadow:0 4px 20px rgba(156,107,79,.16)}
 
-.ai-quote{
-  flex:none; padding:12px 18px; font-size:12.5px; line-height:1.75; color:var(--tx2);
-  font-weight:300; border-bottom:1px solid var(--line); cursor:pointer;
-  background:rgba(120,110,90,.045); max-height:96px; overflow:hidden; position:relative;
+.aic-head{
+  display:flex; align-items:flex-start; gap:8px; padding:10px 12px 9px;
+  border-bottom:1px solid var(--line); cursor:pointer; background:rgba(120,110,90,.05);
+  border-radius:var(--r) var(--r) 0 0;
+}
+.aic-head:hover .aic-q{color:var(--tx)}
+.aic-q{
+  flex:1; min-width:0; font-size:11.5px; line-height:1.6; color:var(--tx3); font-weight:300;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
   transition:color .25s;
 }
-.ai-quote::before{content:"「"; color:var(--line2); margin-right:2px}
-.ai-quote::after{content:"」"; color:var(--line2)}
-.ai-quote:hover{color:var(--tx)}
+.aic-q::before{content:"「"; color:var(--line2)}
+.aic-q::after{content:"」"; color:var(--line2)}
+.ai-x{background:none; border:0; color:var(--tx3); cursor:pointer; font:inherit;
+  font-size:11px; padding:1px 4px; flex:none; transition:color .25s}
+.ai-x:hover{color:var(--bad)}
 
-.ai-body{flex:1; min-height:0; overflow-y:auto; padding:16px 18px}
-.ai-empty{color:var(--tx3); font-size:13px; line-height:1.9; font-weight:300; padding:8px 0 4px}
-.ai-u{font-size:13px; color:var(--ac2); margin:0 0 10px; padding-left:12px;
-  border-left:2px solid rgba(59,74,90,.3); font-weight:300}
+.aic-body{padding:12px 14px 0; max-height:52vh; overflow-y:auto}
+.aicard:not(.exp) .aic-body{cursor:pointer; max-height:none; overflow:visible; padding-bottom:2px}
+.aicard:not(.exp) .aic-body:hover{background:rgba(156,107,79,.04)}
+.ai-a.clamp{display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+  overflow:hidden; margin-bottom:6px}
+.ai-a.clamp *{display:inline}
+.ai-a.clamp pre,.ai-a.clamp ul,.ai-a.clamp ol,.ai-a.clamp blockquote{display:none}
+.aic-more{font-size:10.5px; color:var(--tx3); letter-spacing:.1em; padding-bottom:6px}
+.aic-body:empty{display:none}
+.ai-u{font-size:12.5px; color:var(--ac2); margin:0 0 9px; padding-left:10px;
+  border-left:2px solid rgba(59,74,90,.3); font-weight:300; line-height:1.7}
 .ai-u p{margin:0}
-.ai-a{font-size:14px; line-height:1.95; color:var(--tx); margin:0 0 18px; font-weight:300}
-.ai-a p{margin-bottom:10px}
-.ai-a ul,.ai-a ol{margin:0 0 10px 19px}
-.ai-a li{margin-bottom:5px}
-.ai-a pre,.ai-a blockquote{margin:10px 0}
-.ai-a pre{font-size:12px}
-.ai-think{color:var(--tx3); font-size:13px}
+.ai-a{font-size:13.5px; line-height:1.9; color:var(--tx); margin:0 0 12px; font-weight:300}
+.ai-a p{margin-bottom:9px}
+.ai-a ul,.ai-a ol{margin:0 0 9px 18px}
+.ai-a li{margin-bottom:4px}
+.ai-a pre,.ai-a blockquote{margin:9px 0}
+.ai-a pre{font-size:11.5px; padding:10px 12px}
+.ai-a code{font-size:.82em}
+.ai-think{color:var(--tx3); font-size:12.5px}
 .ai-think::after{content:""; animation:aidot 1.5s steps(4,end) infinite}
 @keyframes aidot{0%{content:""}25%{content:"·"}50%{content:"··"}75%{content:"···"}}
 
-.ai-foot{flex:none; border-top:1px solid var(--line); background:rgba(235,229,216,.45)}
-.ai-presets{display:flex; gap:6px; flex-wrap:wrap; padding:11px 16px 0}
-.ai-presets .fbtn{font-size:11.5px; padding:3px 10px}
-.ai-ctl{display:flex; gap:12px; align-items:flex-end; padding:11px 16px 14px}
+.ai-presets{display:flex; gap:5px; flex-wrap:wrap; padding:10px 14px 0}
+.ai-presets .fbtn{font-size:11px; padding:2px 9px}
+.ai-ctl{display:flex; gap:10px; align-items:flex-end; padding:10px 14px 12px}
 .ai-ta{flex:1; background:none; border:0; border-bottom:1px solid var(--line2);
-  padding:6px 2px; color:var(--tx); font:inherit; font-size:13.5px; outline:none;
-  resize:none; line-height:1.7; max-height:140px; font-weight:300; transition:border-color .4s}
+  padding:5px 2px; color:var(--tx); font:inherit; font-size:13px; outline:none;
+  resize:none; line-height:1.7; max-height:120px; font-weight:300; transition:border-color .4s}
 .ai-ta:focus{border-bottom-color:var(--ac)}
 
-/* 正在提问的那一段高亮；问过的段落留个标记 */
-.ai-active{background:rgba(156,107,79,.07); box-shadow:-10px 0 0 rgba(156,107,79,.07),
-  10px 0 0 rgba(156,107,79,.07)}
-.ai-has>.aibtn{opacity:.55; color:var(--ac2); border-color:var(--ac2)}
+/* 正文里的锚点标记 */
+.ai-has{background:rgba(156,107,79,.045)}
+.ai-active{background:rgba(156,107,79,.10)}
+.ai-has>.aibtn{opacity:.6; color:var(--ac2); border-color:var(--ac2)}
 .aiblk.ai-active>.aibtn{opacity:1; background:var(--ac); color:var(--washi); border-color:var(--ac)}
 
-/* 窄屏改成底部抽屉 */
-@media(max-width:760px){
-  .aiside{top:auto; left:0; right:0; width:auto; height:80vh;
-    border-left:0; border-top:1px solid var(--line2); border-radius:10px 10px 0 0;
-    transform:translateY(103%); box-shadow:0 -14px 40px rgba(35,33,28,.16)}
-  .aiside.on{transform:none}
-  .ai-head{height:52px}
+/* 窄屏放不下批注栏：只显示当前那张，贴在底部 */
+@media(max-width:1179px){
+  .airail{position:fixed; top:auto; left:0; right:0; bottom:0; width:auto; z-index:60}
+  .airail .aicard{display:none !important}
+  .airail .aicard.active{
+    display:block !important; position:static; width:auto; right:auto;
+    border-radius:10px 10px 0 0; border-left:0; border-right:0; border-bottom:0;
+    box-shadow:0 -12px 34px rgba(35,33,28,.16); max-height:82vh;
+    display:flex !important; flex-direction:column;
+  }
+  .airail .aicard.active .aic-body{flex:1; max-height:none}
 }
 
 .aicfg{display:flex; flex-direction:column; gap:7px}
